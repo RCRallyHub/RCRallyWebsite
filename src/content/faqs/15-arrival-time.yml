@@ -1,0 +1,6 @@
+question: "How early should players arrive?"
+answer: "Please arrive about 10 minutes before your scheduled start time to check in and warm up."
+category: "Booking"
+displayOrder: 15
+published: true
+useAsChatbotAnswer: true

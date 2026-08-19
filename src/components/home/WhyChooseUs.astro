@@ -1,0 +1,31 @@
+---
+import Icon from '../Icon.astro';
+interface Item { icon: string; title: string; description: string; isPlaceholder: boolean }
+interface Props { items: Item[] }
+const { items } = Astro.props;
+---
+<section class="py-24 sm:py-28 bg-rc-charcoal/50 relative">
+  <div class="absolute inset-0 court-lines-bg opacity-[0.03]" aria-hidden="true"></div>
+  <div class="container-rc relative">
+    <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+      <p class="eyebrow mb-5 mx-auto w-fit">Why RC Rally Hub</p>
+      <h2 class="section-heading">Why Choose RC Rally Hub?</h2>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {items.map((item, i) => (
+        <div class="reveal flex gap-4 p-5 rounded-xl border border-white/10 bg-rc-black/40 hover:border-rc-purple/50 transition-colors duration-300" data-reveal-delay={(i % 6) * 80}>
+          <div class="w-10 h-10 shrink-0 rounded-lg bg-rc-purple/15 border border-rc-purple/40 flex items-center justify-center text-rc-purple-light">
+            <Icon name={item.icon} class="w-5 h-5" />
+          </div>
+          <div>
+            <h3 class="font-heading font-bold text-rc-white mb-1 flex items-center gap-2">
+              {item.title}
+              {item.isPlaceholder && <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-rc-lime/15 text-rc-lime uppercase tracking-wide">Editable</span>}
+            </h3>
+            <p class="text-sm text-rc-silver leading-relaxed">{item.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

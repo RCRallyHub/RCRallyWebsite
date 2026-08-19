@@ -1,0 +1,14 @@
+name: "Tournament and Event Package"
+description: "Full-court booking with event support for brackets, tournaments, and competitive play days."
+price: "Contact us for tournament rates"
+billingUnit: "per event"
+peakOrOffPeak: "both"
+category: "tournament"
+features:
+  - "Full-day or multi-hour court block"
+  - "Event coordination support"
+  - "Great for club and league tournaments"
+isPlaceholderPrice: true
+displayOrder: 7
+featured: true
+published: true

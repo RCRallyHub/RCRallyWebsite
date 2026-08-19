@@ -1,0 +1,6 @@
+question: "How much is court rental?"
+answer: "Off-peak hourly rentals start at ₱250/hour and peak-hour rentals start at ₱350/hour (placeholder rates — see our Rates & Packages page for the latest editable pricing, or contact us for official rates)."
+category: "Rates & Payment"
+displayOrder: 2
+published: true
+useAsChatbotAnswer: true

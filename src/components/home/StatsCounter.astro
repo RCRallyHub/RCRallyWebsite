@@ -1,0 +1,60 @@
+---
+interface Stat { label: string; value: number; suffix: string; isDummy: boolean }
+interface Props { stats: Stat[] }
+const { stats } = Astro.props;
+---
+<section class="py-20 relative overflow-hidden">
+  <div class="absolute inset-0 bg-rc-gradient opacity-90" aria-hidden="true"></div>
+  <div class="absolute inset-0 court-lines-bg opacity-10" aria-hidden="true"></div>
+  <div class="container-rc relative">
+    <p class="text-center text-xs uppercase tracking-[0.3em] text-white/70 mb-2">Demonstration statistics — update once official numbers are available</p>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+      {stats.map((stat, i) => (
+        <div class="text-center reveal" data-reveal-delay={i * 100}>
+          <p class="font-display text-5xl sm:text-6xl font-extrabold text-white stat-number" data-value={stat.value} data-suffix={stat.suffix}>0{stat.suffix}</p>
+          <p class="mt-2 text-sm uppercase tracking-wide text-white/80 font-heading">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  function animateCount(el: HTMLElement) {
+    const target = Number(el.dataset.value || '0');
+    const suffix = el.dataset.suffix || '';
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      el.textContent = `${target.toLocaleString()}${suffix}`;
+      return;
+    }
+    const duration = 1600;
+    const start = performance.now();
+    function tick(now: number) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(target * eased);
+      el.textContent = `${current.toLocaleString()}${suffix}`;
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const numbers = document.querySelectorAll<HTMLElement>('.stat-number');
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            animateCount(entry.target as HTMLElement);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.4 }
+    );
+    numbers.forEach((n) => observer.observe(n));
+  } else {
+    numbers.forEach((n) => animateCount(n));
+  }
+</script>

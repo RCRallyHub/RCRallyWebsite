@@ -1,0 +1,6 @@
+question: "Can we rent paddles and balls?"
+answer: "Yes, paddle and ball rental is available at the venue for an additional fee. You can add rentals directly in Step 2 of the booking form."
+category: "Equipment"
+displayOrder: 6
+published: true
+useAsChatbotAnswer: true

@@ -1,0 +1,90 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import ContactForm from '../components/ContactForm.astro';
+import Icon from '../components/Icon.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'contact')!;
+
+const settingsEntries = await getCollection('settings');
+const settings = settingsEntries[0].data;
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Contact', url: '/contact' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} compact />
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc grid lg:grid-cols-[0.9fr_1.1fr] gap-14">
+      <div class="reveal space-y-8">
+        <div class="card-surface p-7">
+          <h2 class="font-heading text-xl font-bold text-rc-white mb-5">Get In Touch</h2>
+          <ul class="space-y-5 text-sm">
+            <li class="flex gap-3">
+              <Icon name="map-pin" class="w-5 h-5 text-rc-purple-light shrink-0 mt-0.5" />
+              <div>
+                <p class="text-rc-white font-semibold">{settings.address}</p>
+                <p class="text-rc-silver-dark">{settings.locationDescription}</p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <Icon name="clock" class="w-5 h-5 text-rc-purple-light shrink-0 mt-0.5" />
+              <p class="text-rc-silver">{settings.operatingHours}</p>
+            </li>
+            <li class="flex gap-3">
+              <Icon name="phone" class="w-5 h-5 text-rc-purple-light shrink-0 mt-0.5" />
+              <a href={`tel:${settings.contact.mobile.replace(/\s+/g, '')}`} class="text-rc-silver hover:text-rc-lime transition-colors">
+                {settings.contact.mobile} {settings.contact.mobileIsDummy && <span class="text-[10px] text-rc-lime/80 uppercase">(dummy)</span>}
+              </a>
+            </li>
+            <li class="flex gap-3">
+              <Icon name="mail" class="w-5 h-5 text-rc-purple-light shrink-0 mt-0.5" />
+              <a href={`mailto:${settings.contact.email}`} class="text-rc-silver hover:text-rc-lime transition-colors break-all">
+                {settings.contact.email} {settings.contact.emailIsDummy && <span class="text-[10px] text-rc-lime/80 uppercase">(dummy)</span>}
+              </a>
+            </li>
+          </ul>
+
+          <div class="grid grid-cols-2 gap-3 mt-7">
+            <a href={`tel:${settings.contact.mobile.replace(/\s+/g, '')}`} class="btn-ghost !text-xs" data-ripple><Icon name="phone" class="w-4 h-4" /> Call Us</a>
+            <a href={`mailto:${settings.contact.email}`} class="btn-ghost !text-xs" data-ripple><Icon name="mail" class="w-4 h-4" /> Email Us</a>
+            <a href={settings.social?.facebook || '#'} target="_blank" rel="noopener noreferrer" class="btn-ghost !text-xs" data-ripple><Icon name="facebook" class="w-4 h-4" /> Facebook</a>
+            <a href={settings.contact.messenger || '#'} target="_blank" rel="noopener noreferrer" class="btn-ghost !text-xs" data-ripple><Icon name="messenger" class="w-4 h-4" /> Messenger</a>
+          </div>
+          <a href="/book" class="btn-primary w-full mt-4" data-ripple>Book a Court</a>
+        </div>
+
+        <div class="card-surface p-7">
+          <h3 class="font-heading font-bold text-rc-white mb-3">Nearby Landmarks</h3>
+          <ul class="text-sm text-rc-silver space-y-2 list-disc pl-5">
+            <li>Inside Garahe by Chef Rods Restaurant, Pala-o</li>
+            <li>Along Seminary Drive, Pala-o, Iligan City</li>
+            <li>(Add more confirmed landmarks and directions here via Sveltia CMS)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="reveal space-y-8" data-reveal-delay="100">
+        <div class="rounded-2xl overflow-hidden border border-white/10 aspect-video">
+          <iframe
+            src={settings.contact.mapEmbedUrl}
+            title="Map to RC Rally Hub by Garahe"
+            class="w-full h-full"
+            style="border:0;"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+        <div class="card-surface p-7 sm:p-8">
+          <h2 class="font-heading text-xl font-bold text-rc-white mb-6">Send an Inquiry</h2>
+          <ContactForm />
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

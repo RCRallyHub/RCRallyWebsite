@@ -1,0 +1,13 @@
+{
+  "name": "RC Rally Hub by Garahe",
+  "short_name": "RC Rally Hub",
+  "description": "Pickleball court rental, tournaments, and events in Iligan City.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

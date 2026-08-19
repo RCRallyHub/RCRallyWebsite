@@ -1,0 +1,125 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import Icon from '../components/Icon.astro';
+import TestimonialCarousel from '../components/TestimonialCarousel.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'about')!;
+const { Content } = await page.render();
+
+const aboutEntries = await getCollection('aboutContent');
+const about = aboutEntries[0].data;
+
+const testimonials = (await getCollection('testimonials')).filter((t) => t.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder).slice(0, 6);
+
+const settingsEntries = await getCollection('settings');
+const settings = settingsEntries[0].data;
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'About', url: '/about' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} />
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc grid lg:grid-cols-[1.3fr_0.7fr] gap-14">
+      <article class="prose-rc reveal">
+        <Content />
+      </article>
+      <aside class="reveal space-y-6" data-reveal-delay="100">
+        <div class="card-surface p-6">
+          <h3 class="font-heading font-bold text-rc-lime uppercase text-sm tracking-wide mb-4">Venue Snapshot</h3>
+          <ul class="space-y-4 text-sm text-rc-silver">
+            <li class="flex gap-3"><Icon name="map-pin" class="w-5 h-5 text-rc-purple-light shrink-0" /><span>{settings.address}<br/><span class="text-rc-silver-dark">{settings.locationDescription}</span></span></li>
+            <li class="flex gap-3"><Icon name="clock" class="w-5 h-5 text-rc-purple-light shrink-0" /><span>{settings.operatingHours}</span></li>
+          </ul>
+          <a href="/book" class="btn-primary w-full mt-6" data-ripple>Book a Court</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24 bg-rc-charcoal/40">
+    <div class="container-rc">
+      <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+        <p class="eyebrow mb-5 mx-auto w-fit">What We Stand For</p>
+        <h2 class="section-heading">Community Values</h2>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-5">
+        {about.values.map((v, i) => (
+          <div class="reveal card-surface p-6" data-reveal-delay={i * 90}>
+            <h3 class="font-heading font-bold text-rc-white text-lg mb-2">{v.title}</h3>
+            <p class="text-sm text-rc-silver leading-relaxed">{v.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc">
+      <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+        <p class="eyebrow mb-5 mx-auto w-fit">Meet the Team</p>
+        <h2 class="section-heading">Team & Staff</h2>
+        <p class="text-rc-silver mt-4">Names, roles, and photos below are editable placeholders — update them in Sveltia CMS.</p>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+        {about.team.map((member, i) => (
+          <div class="reveal text-center" data-reveal-delay={i * 100}>
+            <div class="w-24 h-24 mx-auto rounded-full bg-rc-gradient flex items-center justify-center mb-4 border-2 border-white/10">
+              <Icon name="users" class="w-9 h-9 text-white/80" />
+            </div>
+            <p class="font-heading font-bold text-rc-white">{member.name}</p>
+            <p class="text-xs text-rc-silver-dark uppercase tracking-wide">{member.role}</p>
+            {member.isPlaceholder && <span class="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded-full bg-rc-lime/15 text-rc-lime uppercase tracking-wide">Placeholder</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24 bg-rc-charcoal/40">
+    <div class="container-rc">
+      <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+        <p class="eyebrow mb-5 mx-auto w-fit">Trusted Together</p>
+        <h2 class="section-heading">Community Partners</h2>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
+        {about.partners.map((p, i) => (
+          <div class="reveal card-surface p-6 flex items-start gap-4" data-reveal-delay={i * 100}>
+            <div class="w-12 h-12 rounded-lg bg-rc-purple/15 border border-rc-purple/40 flex items-center justify-center shrink-0">
+              <Icon name="building" class="w-6 h-6 text-rc-purple-light" />
+            </div>
+            <div>
+              <p class="font-heading font-bold text-rc-white">{p.name}</p>
+              {p.description && <p class="text-sm text-rc-silver-dark mt-1">{p.description}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc">
+      <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+        <p class="eyebrow mb-5 mx-auto w-fit">Hear From Players</p>
+        <h2 class="section-heading">Player Stories</h2>
+      </div>
+      <TestimonialCarousel testimonials={testimonials.map((t) => t.data)} />
+    </div>
+  </section>
+
+  <section class="py-20 relative overflow-hidden">
+    <div class="absolute inset-0 bg-rc-gradient opacity-90"></div>
+    <div class="container-rc relative text-center max-w-xl mx-auto reveal">
+      <h2 class="section-heading mb-5">Come Rally With Us</h2>
+      <p class="text-white/85 mb-8">Whether it's your first game or your fiftieth tournament, RC Rally Hub is ready for you.</p>
+      <a href="/book" class="btn-primary bg-white text-rc-black hover:bg-white/90" data-ripple data-magnetic>Book a Court</a>
+    </div>
+  </section>
+</Layout>

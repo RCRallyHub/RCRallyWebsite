@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import VideoCarousel from '../components/VideoCarousel.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'videos')!;
+
+const videos = (await getCollection('videos')).filter((v) => v.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Videos', url: '/videos' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} compact />
+
+  <section class="py-16 sm:py-20">
+    <div class="container-rc">
+      {videos.length > 0 ? (
+        <VideoCarousel videos={videos.map((v) => v.data)} id="videos-page-carousel" />
+      ) : (
+        <p class="text-center text-rc-silver-dark py-16">No videos published yet — add some in Sveltia CMS under "Videos."</p>
+      )}
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-rc-charcoal/40">
+    <div class="container-rc max-w-2xl mx-auto text-center reveal">
+      <h2 class="font-heading text-2xl font-bold text-rc-white mb-3">Want to see more?</h2>
+      <p class="text-rc-silver mb-6">Follow RC Rally Hub on Facebook for the latest Reels, match highlights, and event recaps.</p>
+      <a href="https://facebook.com/RCRallyHub" target="_blank" rel="noopener noreferrer" class="btn-primary" data-ripple>Follow on Facebook</a>
+    </div>
+  </section>
+</Layout>

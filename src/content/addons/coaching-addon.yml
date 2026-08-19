@@ -1,0 +1,7 @@
+name: "Coaching Add-on"
+description: "Add a coach to your session for guided practice and tips."
+price: "Contact us for pricing"
+unit: "per session"
+icon: "whistle"
+displayOrder: 3
+published: true

@@ -1,0 +1,69 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  image: string;
+  imageAlt?: string;
+  excerpt: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  category: string;
+  skillLevel: string;
+  fee: string;
+  availableSlots?: number;
+  maxParticipants?: number;
+  status: string;
+  index?: number;
+}
+const { slug, title, image, imageAlt, excerpt, date, startTime, endTime, category, skillLevel, fee, availableSlots, maxParticipants, status, index = 0 } = Astro.props;
+
+const dateObj = new Date(`${date}T00:00:00`);
+const dateLabel = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+function to12h(t: string) {
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+const statusColors: Record<string, string> = {
+  'Registration Open': 'bg-rc-lime text-rc-black',
+  Upcoming: 'bg-rc-purple text-white',
+  'Registration Closed': 'bg-rc-silver-dark text-rc-black',
+  Ongoing: 'bg-amber-400 text-rc-black',
+  Completed: 'bg-white/10 text-rc-silver',
+  Cancelled: 'bg-red-500/80 text-white',
+};
+---
+<article class="reveal card-surface overflow-hidden group h-full flex flex-col hover:border-rc-lime/40 transition-colors duration-300" data-reveal-delay={(index % 3) * 100}>
+  <a href={`/events/${slug}`} class="relative block aspect-[4/3] overflow-hidden">
+    <img src={image} alt={imageAlt || title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" width="600" height="450" />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0"></div>
+    <span class:list={['absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-heading font-bold uppercase tracking-wide', statusColors[status] || 'bg-white/20 text-white']}>
+      {status}
+    </span>
+    <span class="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur text-[11px] font-heading font-bold uppercase tracking-wide text-rc-lime">
+      {category}
+    </span>
+  </a>
+  <div class="p-5 flex flex-col flex-1">
+    <h3 class="font-heading text-lg font-bold text-rc-white mb-2">
+      <a href={`/events/${slug}`} class="hover:text-rc-lime transition-colors">{title}</a>
+    </h3>
+    <p class="text-sm text-rc-silver leading-relaxed mb-4 flex-1">{excerpt}</p>
+    <dl class="grid grid-cols-2 gap-y-2 text-xs text-rc-silver-dark mb-5">
+      <dt class="sr-only">Date</dt>
+      <dd class="col-span-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-rc-purple-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3m8-3v3M4 8h16M5 6h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1z"/></svg> {dateLabel} · {to12h(startTime)}–{to12h(endTime)}</dd>
+      <dt class="sr-only">Skill Level</dt>
+      <dd>Level: <span class="text-rc-silver">{skillLevel}</span></dd>
+      <dt class="sr-only">Fee</dt>
+      <dd>Fee: <span class="text-rc-silver">{fee}</span></dd>
+      {availableSlots !== undefined && maxParticipants && (
+        <dd class="col-span-2">Slots: <span class="text-rc-lime">{availableSlots}</span> / {maxParticipants} available</dd>
+      )}
+    </dl>
+    <a href={`/events/${slug}`} class="btn-secondary w-full !py-2.5 !text-sm mt-auto" data-ripple>Register</a>
+  </div>
+</article>

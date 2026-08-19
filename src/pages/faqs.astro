@@ -1,0 +1,49 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import FaqAccordion from '../components/FaqAccordion.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'faqs')!;
+
+const faqs = (await getCollection('faqs')).filter((f) => f.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.data.question,
+    acceptedAnswer: { '@type': 'Answer', text: f.data.answer },
+  })),
+};
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'FAQs', url: '/faqs' }]}
+  structuredData={[faqSchema]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} compact />
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc">
+      <FaqAccordion faqs={faqs.map((f) => f.data)} />
+    </div>
+  </section>
+
+  <section class="pb-24">
+    <div class="container-rc">
+      <div class="card-surface p-8 sm:p-10 text-center max-w-2xl mx-auto reveal">
+        <h2 class="font-heading text-2xl font-bold text-rc-white mb-3">Still have questions?</h2>
+        <p class="text-rc-silver mb-6">Our Rally Assistant chatbot is ready in the bottom corner, or reach our team directly.</p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a href="/contact" class="btn-primary" data-ripple>Contact Us</a>
+          <a href="/book" class="btn-secondary" data-ripple>Book a Court</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

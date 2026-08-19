@@ -1,0 +1,41 @@
+---
+import { getCollection } from 'astro:content';
+
+const images = (await getCollection('gallery')).filter((g) => g.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder).slice(0, 8);
+---
+<section class="py-24 sm:py-28 bg-rc-charcoal/40">
+  <div class="container-rc">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14 reveal">
+      <div>
+        <p class="eyebrow mb-5">Moments From the Court</p>
+        <h2 class="section-heading">Gallery</h2>
+      </div>
+      <a href="/gallery" class="text-rc-lime font-heading font-bold uppercase text-sm tracking-wide flex items-center gap-2 hover:gap-3 transition-all">
+        View full gallery
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[160px] sm:auto-rows-[200px]">
+      {images.map((img, i) => (
+        <a
+          href="/gallery"
+          class:list={[
+            'reveal group relative overflow-hidden rounded-xl block',
+            i === 0 ? 'col-span-2 row-span-2' : '',
+          ]}
+          data-reveal-delay={(i % 8) * 60}
+        >
+          <img
+            src={img.data.thumbnail || img.data.image}
+            alt={img.data.alt}
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+            <span class="text-xs font-heading font-bold uppercase tracking-wide text-white">{img.data.category}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

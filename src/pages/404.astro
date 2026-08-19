@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === '404')!;
+---
+<Layout title={page.data.seoTitle || page.data.title} description={page.data.metaDescription || ''} noindex>
+  <section class="min-h-[75vh] flex items-center justify-center relative overflow-hidden">
+    <div class="absolute inset-0 court-lines-bg opacity-[0.05]"></div>
+    <div class="container-rc relative text-center max-w-xl mx-auto py-24">
+      <p class="font-display text-8xl sm:text-9xl font-extrabold text-gradient-lime mb-4">404</p>
+      <h1 class="section-heading mb-4">{page.data.heading}</h1>
+      <p class="text-rc-silver text-lg mb-10">{page.data.description}</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="/" class="btn-primary" data-ripple>Back to Home</a>
+        <a href="/book" class="btn-secondary" data-ripple>Book a Court</a>
+      </div>
+    </div>
+  </section>
+</Layout>

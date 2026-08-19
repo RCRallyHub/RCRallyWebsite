@@ -1,0 +1,14 @@
+name: "Corporate Event Package"
+description: "A fun, active team-building activity for companies and organizations — no pickleball experience required."
+price: "Contact us for corporate rates"
+billingUnit: "per event"
+peakOrOffPeak: "both"
+category: "corporate"
+features:
+  - "Beginner-friendly team activity"
+  - "Optional coaching or clinic add-on"
+  - "Great for team-building days"
+isPlaceholderPrice: true
+displayOrder: 8
+featured: false
+published: true

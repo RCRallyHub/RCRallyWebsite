@@ -1,0 +1,7 @@
+name: "Ball Rental"
+description: "Get a set of pickleballs for your game."
+price: "Contact us for pricing"
+unit: "per set / session"
+icon: "ball"
+displayOrder: 2
+published: true

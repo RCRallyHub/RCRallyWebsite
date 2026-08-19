@@ -1,0 +1,7 @@
+name: "Paddle Rental"
+description: "Borrow a paddle for your session."
+price: "Contact us for pricing"
+unit: "per paddle / session"
+icon: "paddle"
+displayOrder: 1
+published: true

@@ -1,0 +1,6 @@
+question: "What are your operating hours?"
+answer: "RC Rally Hub is open Monday to Sunday, 6:00 AM to 3:00 AM the following day — including hourly slots that cross midnight."
+category: "Venue & Hours"
+displayOrder: 3
+published: true
+useAsChatbotAnswer: true

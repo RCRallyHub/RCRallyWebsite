@@ -1,0 +1,14 @@
+name: "Private Event Package"
+description: "Celebrate a birthday, reunion, or special occasion with an exclusive court booking."
+price: "Contact us for private event rates"
+billingUnit: "per event"
+peakOrOffPeak: "both"
+category: "private-event"
+features:
+  - "Exclusive use of the court for your group"
+  - "Flexible scheduling, subject to availability"
+  - "Pairs well with Garahe by Chef Rods Restaurant next door"
+isPlaceholderPrice: true
+displayOrder: 9
+featured: false
+published: true

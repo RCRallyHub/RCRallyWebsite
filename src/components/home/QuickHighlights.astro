@@ -1,0 +1,24 @@
+---
+import Icon from '../Icon.astro';
+interface Highlight { icon: string; title: string; description: string }
+interface Props { highlights: Highlight[] }
+const { highlights } = Astro.props;
+---
+<section class="relative -mt-16 sm:-mt-20 z-20">
+  <div class="container-rc">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {highlights.map((h, i) => (
+        <div
+          class="tilt-card reveal card-surface p-6 hover:border-rc-lime/40 transition-colors duration-300 group"
+          data-reveal-delay={i * 100}
+        >
+          <div class="w-12 h-12 rounded-xl bg-rc-gradient flex items-center justify-center mb-4 group-hover:shadow-glow-purple transition-shadow duration-300">
+            <Icon name={h.icon} class="w-6 h-6 text-white" />
+          </div>
+          <h3 class="font-heading text-lg font-bold text-rc-white mb-1.5">{h.title}</h3>
+          <p class="text-sm text-rc-silver leading-relaxed">{h.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

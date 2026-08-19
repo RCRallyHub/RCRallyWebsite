@@ -1,0 +1,28 @@
+---
+interface Step { step: number; title: string; description: string }
+interface Props { steps: Step[] }
+const { steps } = Astro.props;
+---
+<section class="py-24 sm:py-28">
+  <div class="container-rc">
+    <div class="text-center max-w-2xl mx-auto mb-16 reveal">
+      <p class="eyebrow mb-5 mx-auto w-fit">Simple Process</p>
+      <h2 class="section-heading">How Booking Works</h2>
+    </div>
+    <div class="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-rc-purple via-rc-lime to-rc-purple opacity-30" aria-hidden="true"></div>
+      {steps.map((step, i) => (
+        <div class="reveal relative text-center" data-reveal-delay={i * 130}>
+          <div class="relative mx-auto w-16 h-16 rounded-full bg-rc-charcoal border-2 border-rc-lime flex items-center justify-center font-display text-2xl font-extrabold text-rc-lime mb-5 shadow-glow-lime/30">
+            {step.step}
+          </div>
+          <h3 class="font-heading text-lg font-bold text-rc-white mb-2">{step.title}</h3>
+          <p class="text-sm text-rc-silver leading-relaxed max-w-[240px] mx-auto">{step.description}</p>
+        </div>
+      ))}
+    </div>
+    <div class="text-center mt-14 reveal">
+      <a href="/book" class="btn-primary" data-ripple data-magnetic>Start Your Booking</a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,14 @@
+name: "Coaching Session"
+description: "One-on-one or small-group coaching to sharpen your serve, dinks, and strategy."
+price: "Contact us for coaching rates"
+billingUnit: "per session"
+peakOrOffPeak: "n/a"
+category: "coaching"
+features:
+  - "Personalized instruction"
+  - "Beginner to intermediate friendly"
+  - "Available by appointment"
+isPlaceholderPrice: true
+displayOrder: 4
+featured: false
+published: true

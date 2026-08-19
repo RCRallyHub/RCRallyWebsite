@@ -1,0 +1,6 @@
+question: "Can I book a schedule after midnight?"
+answer: "Yes. Since RC Rally Hub operates until 3:00 AM, you can book hourly slots like 11:00 PM–12:00 AM, 12:00–1:00 AM, 1:00–2:00 AM, and 2:00–3:00 AM. Our booking system handles these overnight slots correctly, so your date and time never get mixed up."
+category: "Booking"
+displayOrder: 16
+published: true
+useAsChatbotAnswer: true

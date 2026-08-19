@@ -1,0 +1,204 @@
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-rc-black text-rc-white font-body antialiased;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(112,36,201,0.16), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(167,213,0,0.08), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold tracking-wide text-rc-white;
+  }
+
+  ::selection {
+    background-color: theme('colors.rc-lime');
+    color: theme('colors.rc-black');
+  }
+
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Visible focus states everywhere, keyboard-first */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid theme('colors.rc-lime');
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: theme('colors.rc-black');
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.rc-purple-dark');
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.rc-purple');
+  }
+}
+
+@layer components {
+  .container-rc {
+    @apply mx-auto w-full max-w-content px-5 sm:px-6 lg:px-10;
+  }
+
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-rc-lime focus:px-4 focus:py-2 focus:font-heading focus:font-bold focus:text-rc-black;
+  }
+
+  .btn {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-heading text-base font-semibold tracking-wide uppercase transition-all duration-300 min-h-[44px] overflow-hidden isolate;
+  }
+
+  .btn-primary {
+    @apply btn bg-rc-lime text-rc-black shadow-glow-lime hover:bg-rc-lime-light hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply btn bg-transparent text-rc-white border-2 border-rc-purple hover:bg-rc-purple/20 hover:border-rc-purple-light hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .btn-ghost {
+    @apply btn bg-white/5 text-rc-white border border-white/15 hover:bg-white/10 hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  /* Ripple pseudo-layer, activated via data-ripple JS on click */
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.5) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: -1;
+  }
+  .btn.rippling::after {
+    opacity: 1;
+    transition: opacity 0.1s ease;
+  }
+
+  .card-surface {
+    @apply relative rounded-2xl border border-white/10 bg-rc-charcoal/80 backdrop-blur-sm shadow-card;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-rc-lime/40 bg-rc-lime/10 px-4 py-1.5 text-xs font-heading font-bold uppercase tracking-[0.2em] text-rc-lime;
+  }
+
+  .section-heading {
+    @apply font-display text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight text-rc-white;
+  }
+
+  .prose-rc {
+    @apply max-w-none text-rc-silver;
+  }
+  .prose-rc h2 {
+    @apply font-display text-2xl sm:text-3xl uppercase text-rc-white mt-10 mb-4 first:mt-0;
+  }
+  .prose-rc h3 {
+    @apply font-heading text-xl text-rc-lime mt-8 mb-3;
+  }
+  .prose-rc p {
+    @apply leading-relaxed mb-4 text-rc-silver;
+  }
+  .prose-rc ul {
+    @apply list-disc pl-6 mb-4 space-y-2 text-rc-silver;
+  }
+  .prose-rc strong {
+    @apply text-rc-white;
+  }
+  .prose-rc em {
+    @apply text-rc-silver-dark;
+  }
+  .prose-rc a {
+    @apply text-rc-lime underline underline-offset-4 hover:text-rc-lime-light;
+  }
+
+  /* Reveal-on-scroll utility, toggled by IntersectionObserver in scroll-reveal.ts */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  .court-lines-bg {
+    background-image: theme('backgroundImage.court-lines');
+    background-size: 48px 48px;
+  }
+
+  .tilt-card {
+    transform-style: preserve-3d;
+    transition: transform 0.25s ease-out;
+  }
+}
+
+@layer utilities {
+  .text-gradient-lime {
+    background: linear-gradient(90deg, #A7D500, #C4F229);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-purple {
+    background: linear-gradient(90deg, #9153E8, #7024C9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  }
+}

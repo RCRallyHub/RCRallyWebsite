@@ -1,0 +1,6 @@
+question: "When is a reservation officially confirmed?"
+answer: "Online submissions start with Pending Confirmation status. Your reservation becomes officially Confirmed once our team verifies availability and reaches out to confirm your slot through your preferred contact method."
+category: "Booking"
+displayOrder: 17
+published: true
+useAsChatbotAnswer: true

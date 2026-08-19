@@ -1,0 +1,31 @@
+---
+interface Props { heading: string; description: string }
+const { heading, description } = Astro.props;
+---
+<section class="py-24 sm:py-32 relative overflow-hidden">
+  <div class="container-rc grid lg:grid-cols-2 gap-14 items-center">
+    <div class="reveal relative">
+      <div class="absolute -inset-4 bg-rc-gradient opacity-20 blur-3xl rounded-full" aria-hidden="true"></div>
+      <div class="relative rounded-2xl overflow-hidden border border-white/10 shadow-card">
+        <img
+          src="/images/people/friends-group-court-1200.webp"
+          alt="A group of friends posing courtside with their paddles at RC Rally Hub"
+          class="w-full h-[420px] sm:h-[480px] object-cover"
+          loading="lazy"
+          width="1200"
+          height="900"
+        />
+      </div>
+      <div class="absolute -bottom-6 -left-6 hidden sm:block card-surface px-5 py-4 border-rc-lime/30">
+        <p class="font-display text-3xl text-rc-lime font-bold">850+</p>
+        <p class="text-xs text-rc-silver-dark uppercase tracking-wide">Happy players <span class="text-rc-lime/70">(demo)</span></p>
+      </div>
+    </div>
+    <div class="reveal" data-reveal-delay="120">
+      <p class="eyebrow mb-5">Our Story</p>
+      <h2 class="section-heading mb-6">{heading}</h2>
+      <p class="text-rc-silver text-lg leading-relaxed mb-8">{description}</p>
+      <a href="/about" class="btn-secondary" data-ripple data-magnetic>Discover RC Rally Hub</a>
+    </div>
+  </div>
+</section>

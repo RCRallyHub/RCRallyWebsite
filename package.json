@@ -1,0 +1,32 @@
+{
+  "name": "rc-rally-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RC Rally Hub by Garahe — official website (Astro + Tailwind + Sveltia CMS)",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check --skipConfigCheck || true && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "verify:booking-time": "node --experimental-strip-types scripts/verify-booking-time.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/tailwind": "^6.0.2",
+    "astro": "^5.18.2",
+    "gsap": "^3.12.5",
+    "swiper": "^11.1.15",
+    "tailwindcss": "^3.4.14"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.7.5",
+    "playwright": "^1.56.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  }
+}

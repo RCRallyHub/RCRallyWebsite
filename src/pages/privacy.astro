@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'privacy')!;
+
+const policies = await getCollection('policies');
+const policy = policies.find((p) => p.slug === 'privacy')!;
+const { Content } = await policy.render();
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Privacy Policy', url: '/privacy' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} compact />
+  <section class="py-16 sm:py-20">
+    <div class="container-rc max-w-3xl mx-auto">
+      <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-8">Last updated: {policy.data.lastUpdated}</p>
+      <div class="prose-rc reveal">
+        <Content />
+      </div>
+    </div>
+  </section>
+</Layout>

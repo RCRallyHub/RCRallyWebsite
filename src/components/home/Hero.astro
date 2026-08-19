@@ -1,0 +1,180 @@
+---
+import Icon from '../Icon.astro';
+
+interface Cta { label: string; href: string; style: 'primary' | 'secondary' | 'ghost' }
+interface Props {
+  heading: string;
+  subheading?: string;
+  description?: string;
+  heroImage: string;
+  heroImageAlt?: string;
+  ctas?: Cta[];
+  bookingUrl: string;
+}
+const { heading, subheading, description, heroImage, heroImageAlt, ctas = [], bookingUrl } = Astro.props;
+---
+<section class="relative min-h-[92vh] flex items-center overflow-hidden bg-rc-black" id="hero">
+  <!-- Background image -->
+  <div class="absolute inset-0">
+    <img
+      src={heroImage}
+      alt={heroImageAlt || ''}
+      class="w-full h-full object-cover object-center scale-110"
+      id="hero-bg-image"
+      fetchpriority="high"
+    />
+    <div class="absolute inset-0 bg-gradient-to-t from-rc-black via-rc-black/75 to-rc-black/30"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-rc-black/90 via-rc-black/40 to-transparent"></div>
+    <div class="absolute inset-0 court-lines-bg opacity-[0.06]" aria-hidden="true"></div>
+  </div>
+
+  <!-- Floating pickleball on a curved path (decorative, never overlaps text/buttons) -->
+  <div class="absolute right-[6%] top-[18%] w-24 h-24 hidden md:block pointer-events-none" aria-hidden="true">
+    <div id="hero-ball-orbit" class="w-full h-full animate-spin-slow" style="animation-duration: 18s;">
+      <span class="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.6)]">
+        <span class="absolute inset-0 rounded-full" style="background-image: radial-gradient(circle at 30% 30%, transparent 1px, transparent 2px), repeating-radial-gradient(circle, #999 0, #999 0.5px, transparent 1px, transparent 4px);"></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="container-rc relative z-10 grid lg:grid-cols-[1.15fr_0.85fr] gap-12 items-center py-28">
+    <div>
+      <p id="hero-eyebrow" class="eyebrow mb-6 opacity-0">
+        <Icon name="target" class="w-3.5 h-3.5" /> {subheading || 'Iligan City Pickleball Venue'}
+      </p>
+      <h1 id="hero-heading" class="font-display font-extrabold uppercase leading-[0.95] text-5xl sm:text-6xl md:text-7xl xl:text-8xl opacity-0">
+        <span class="block text-rc-white">{heading.split('. ')[0]}.</span>
+        <span class="block text-gradient-lime">{heading.split('. ')[1]}.</span>
+        <span class="block text-gradient-purple">{heading.split('. ')[2]}</span>
+      </h1>
+      <p id="hero-description" class="mt-6 max-w-xl text-lg text-rc-silver leading-relaxed opacity-0">
+        {description}
+      </p>
+      <div id="hero-ctas" class="mt-9 flex flex-wrap gap-4 opacity-0">
+        {ctas.map((cta) => (
+          <a href={cta.href} class={cta.style === 'primary' ? 'btn-primary' : 'btn-secondary'} data-ripple data-magnetic>
+            {cta.label}
+          </a>
+        ))}
+      </div>
+
+      <div id="hero-trust" class="mt-10 flex items-center gap-6 opacity-0">
+        <div class="flex -space-x-3">
+          {['mens-doubles-action','womens-doubles-action','all-male-open-play','community-celebration'].map((img) => (
+            <img src={`/images/people/${img}-600.webp`} alt="" class="w-10 h-10 rounded-full border-2 border-rc-black object-cover" loading="lazy" />
+          ))}
+        </div>
+        <p class="text-sm text-rc-silver-dark">Join <span class="text-rc-white font-semibold">850+</span> players already rallying <span class="text-[10px] uppercase align-top text-rc-lime/80">(demo stat)</span></p>
+      </div>
+    </div>
+
+    <!-- Compact booking preview widget -->
+    <div id="hero-booking-widget" class="opacity-0">
+      <form id="hero-booking-form" class="card-surface p-6 sm:p-7 border-rc-purple/30 shadow-glow-purple/20" data-hero-booking data-booking-url={bookingUrl}>
+        <p class="font-heading font-bold text-sm uppercase tracking-wide text-rc-lime mb-1">Quick Check</p>
+        <h2 class="font-display text-2xl uppercase text-rc-white mb-5">Check Availability</h2>
+
+        <div class="space-y-4">
+          <div>
+            <label for="hero-date" class="block text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-1.5">Date</label>
+            <input type="date" id="hero-date" name="date" class="w-full min-h-[44px] rounded-lg bg-white/5 border border-white/15 px-3.5 text-sm text-rc-white focus:outline-none focus:border-rc-lime" required />
+          </div>
+          <div>
+            <label for="hero-players" class="block text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-1.5">Number of Players</label>
+            <input
+              type="number"
+              id="hero-players"
+              name="players"
+              min="1"
+              max="50"
+              step="1"
+              value="4"
+              class="w-full min-h-[44px] rounded-lg bg-white/5 border border-white/15 px-3.5 text-sm text-rc-white focus:outline-none focus:border-rc-lime"
+              required
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary w-full mt-6" data-ripple>
+          Check Availability <Icon name="arrow" class="w-4 h-4" />
+        </button>
+        <p class="text-[11px] text-rc-silver-dark mt-3 text-center">
+          You'll pick your exact start time and hours on the booking page, based on real-time availability.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  const dateInput = document.getElementById('hero-date') as HTMLInputElement;
+  const playersInput = document.getElementById('hero-players') as HTMLInputElement;
+  const form = document.getElementById('hero-booking-form') as HTMLFormElement;
+
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  if (dateInput) {
+    dateInput.min = todayISO();
+    dateInput.value = todayISO();
+  }
+
+  // Start time and duration are intentionally NOT collected here — the
+  // booking system shows real, live per-hour availability, and a guess made
+  // on this marketing page could easily be wrong (already booked) by the
+  // time the visitor gets there. Only date and party size are forwarded.
+  //
+  // This goes straight to the booking system (settings.bookingUrl) rather
+  // than routing through the /book explainer page — "Check Availability"
+  // should do exactly that, not add an extra click first.
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const date = dateInput.value || todayISO();
+    const players = Number(playersInput?.value);
+    const playersValue = Number.isInteger(players) && players >= 1 && players <= 50 ? String(players) : '4';
+
+    const bookingUrl = form.dataset.bookingUrl;
+    try {
+      if (!bookingUrl) throw new Error('no booking url configured');
+      const url = new URL(bookingUrl);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) url.searchParams.set('date', date);
+      url.searchParams.set('players', playersValue);
+      window.location.href = url.toString();
+    } catch {
+      // settings.bookingUrl isn't a valid absolute URL yet (e.g. still a
+      // placeholder) — fall back to the on-site explainer page rather than
+      // sending the visitor nowhere.
+      const params = new URLSearchParams();
+      params.set('date', date);
+      params.set('players', playersValue);
+      window.location.href = `/book?${params.toString()}`;
+    }
+  });
+
+  // Coordinated entrance sequence
+  async function animateHero() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const targets = ['#hero-eyebrow', '#hero-heading', '#hero-description', '#hero-ctas', '#hero-trust', '#hero-booking-widget'];
+    if (reduced) {
+      targets.forEach((sel) => document.querySelector(sel)?.classList.remove('opacity-0'));
+      return;
+    }
+    try {
+      const gsap = (await import('gsap')).default;
+      gsap.set(targets, { opacity: 0, y: 24 });
+      gsap.set('#hero-booking-widget', { opacity: 0, x: 24, y: 0 });
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.7 } });
+      tl.to('#hero-eyebrow', { opacity: 1, y: 0 })
+        .to('#hero-heading', { opacity: 1, y: 0, duration: 0.9 }, '-=0.4')
+        .to('#hero-description', { opacity: 1, y: 0 }, '-=0.5')
+        .to('#hero-ctas', { opacity: 1, y: 0 }, '-=0.4')
+        .to('#hero-trust', { opacity: 1, y: 0 }, '-=0.4')
+        .to('#hero-booking-widget', { opacity: 1, x: 0, duration: 0.8 }, '-=0.8');
+    } catch {
+      targets.forEach((sel) => document.querySelector(sel)?.classList.remove('opacity-0'));
+    }
+  }
+  animateHero();
+</script>

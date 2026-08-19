@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'cancellation-policy')!;
+
+const policies = await getCollection('policies');
+const cancellation = policies.find((p) => p.slug === 'cancellation')!;
+const rescheduling = policies.find((p) => p.slug === 'rescheduling')!;
+const venueRules = policies.find((p) => p.slug === 'venue-rules')!;
+const { Content: CancellationContent } = await cancellation.render();
+const { Content: ReschedulingContent } = await rescheduling.render();
+const { Content: VenueRulesContent } = await venueRules.render();
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Cancellation & Rescheduling', url: '/cancellation-policy' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} compact />
+  <section class="py-16 sm:py-20">
+    <div class="container-rc max-w-3xl mx-auto space-y-14">
+      <div class="reveal">
+        <h2 class="font-display text-2xl uppercase text-rc-white mb-4">Cancellation Policy</h2>
+        <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-6">Last updated: {cancellation.data.lastUpdated}</p>
+        <div class="prose-rc"><CancellationContent /></div>
+      </div>
+      <div class="reveal">
+        <h2 class="font-display text-2xl uppercase text-rc-white mb-4">Rescheduling Policy</h2>
+        <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-6">Last updated: {rescheduling.data.lastUpdated}</p>
+        <div class="prose-rc"><ReschedulingContent /></div>
+      </div>
+      <div class="reveal">
+        <h2 class="font-display text-2xl uppercase text-rc-white mb-4">Venue Rules</h2>
+        <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-6">Last updated: {venueRules.data.lastUpdated}</p>
+        <div class="prose-rc"><VenueRulesContent /></div>
+      </div>
+      <div class="card-surface p-7 text-center reveal">
+        <p class="text-rc-silver mb-5">Need to cancel or reschedule an existing booking?</p>
+        <a href="/contact" class="btn-primary" data-ripple>Contact Us</a>
+      </div>
+    </div>
+  </section>
+</Layout>

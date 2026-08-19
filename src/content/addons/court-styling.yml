@@ -1,0 +1,7 @@
+name: "Event Setup (Private Events)"
+description: "Basic event setup support for private bookings — ask about availability."
+price: "Contact us for pricing"
+unit: "per event"
+icon: "sparkles"
+displayOrder: 4
+published: true

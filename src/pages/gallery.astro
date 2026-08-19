@@ -1,0 +1,257 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'gallery')!;
+
+const images = (await getCollection('gallery')).filter((g) => g.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const categories = ['All', ...Array.from(new Set(images.map((i) => i.data.category)))];
+const PAGE_SIZE = 8;
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Gallery', url: '/gallery' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} compact />
+
+  <section class="py-16 sm:py-20" data-gallery-root data-page-size={PAGE_SIZE}>
+    <div class="container-rc">
+      <div class="flex flex-wrap justify-center gap-2 mb-12 reveal" role="tablist" aria-label="Gallery categories">
+        {categories.map((cat, i) => (
+          <button type="button" class:list={['gallery-filter-btn', i === 0 && 'active']} data-category={cat}>{cat}</button>
+        ))}
+      </div>
+
+      <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {images.map((img, i) => (
+          <button
+            type="button"
+            class="gallery-item reveal group relative overflow-hidden rounded-xl aspect-square block"
+            data-category={img.data.category}
+            data-index={i}
+            data-full={img.data.image}
+            data-caption={img.data.caption || img.data.title}
+            data-alt={img.data.alt}
+            data-reveal-delay={(i % 8) * 50}
+            aria-label={`View photo: ${img.data.title}`}
+          >
+            <img
+              src={img.data.thumbnail || img.data.image}
+              alt={img.data.alt}
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 text-left">
+              <span class="text-[10px] font-heading font-bold uppercase tracking-wide text-rc-lime">{img.data.category}</span>
+              <span class="text-xs text-white font-semibold line-clamp-1">{img.data.title}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div class="text-center mt-12">
+        <button id="gallery-load-more" type="button" class="btn-secondary" data-ripple>Load More</button>
+        <p id="gallery-empty" class="hidden text-rc-silver-dark py-10">No photos in this category yet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="fixed inset-0 z-[70] hidden items-center justify-center bg-black/95 p-4" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <button id="lightbox-close" type="button" class="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20" aria-label="Close photo viewer">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button id="lightbox-prev" type="button" class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20" aria-label="Previous photo">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button id="lightbox-next" type="button" class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20" aria-label="Next photo">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <figure class="max-w-4xl w-full">
+      <img id="lightbox-image" src="" alt="" class="w-full max-h-[75vh] object-contain rounded-lg select-none" draggable="false" />
+      <figcaption id="lightbox-caption" class="text-center text-rc-silver mt-4 text-sm"></figcaption>
+    </figure>
+  </div>
+</Layout>
+
+<style>
+  .gallery-filter-btn {
+    @apply px-4 py-2 rounded-full text-xs font-heading font-bold uppercase tracking-wide border border-white/15 text-rc-silver transition-colors;
+    min-height: 40px;
+  }
+  .gallery-filter-btn.active, .gallery-filter-btn:hover {
+    @apply border-rc-lime text-rc-lime bg-rc-lime/10;
+  }
+</style>
+
+<script>
+  const root = document.querySelector('[data-gallery-root]') as HTMLElement;
+  const grid = document.getElementById('gallery-grid') as HTMLElement;
+  const items = Array.from(grid.querySelectorAll<HTMLButtonElement>('.gallery-item'));
+  const filterBtns = root.querySelectorAll<HTMLButtonElement>('.gallery-filter-btn');
+  const loadMoreBtn = document.getElementById('gallery-load-more') as HTMLButtonElement;
+  const emptyEl = document.getElementById('gallery-empty') as HTMLElement;
+  const pageSize = Number(root.dataset.pageSize || '8');
+
+  let activeCategory = 'All';
+  let visibleCount = pageSize;
+
+  function currentFiltered() {
+    return items.filter((item) => activeCategory === 'All' || item.dataset.category === activeCategory);
+  }
+
+  function render() {
+    const filtered = currentFiltered();
+    items.forEach((item) => item.classList.add('hidden'));
+    filtered.forEach((item, i) => {
+      if (i < visibleCount) item.classList.remove('hidden');
+    });
+    loadMoreBtn.classList.toggle('hidden', visibleCount >= filtered.length);
+    emptyEl.classList.toggle('hidden', filtered.length > 0);
+    document.dispatchEvent(new CustomEvent('rc:reinit-reveal'));
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCategory = btn.dataset.category || 'All';
+      visibleCount = pageSize;
+      render();
+    });
+  });
+
+  loadMoreBtn.addEventListener('click', () => {
+    visibleCount += pageSize;
+    render();
+  });
+
+  render();
+
+  // Lightbox
+  const lightbox = document.getElementById('lightbox') as HTMLElement;
+  const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+  const lightboxCaption = document.getElementById('lightbox-caption') as HTMLElement;
+  let currentList: HTMLButtonElement[] = [];
+  let currentPos = 0;
+  let lastFocused: HTMLElement | null = null;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TRANSITION = 'transform 220ms ease, opacity 220ms ease';
+
+  function openLightbox(item: HTMLButtonElement) {
+    currentList = currentFiltered().filter((i) => !i.classList.contains('hidden'));
+    currentPos = currentList.indexOf(item);
+    lastFocused = document.activeElement as HTMLElement;
+    applyCurrent();
+    lightbox.classList.remove('hidden');
+    lightbox.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('lightbox-close')?.focus();
+  }
+
+  // Swaps the image/caption to whatever `currentPos` now points at, with no
+  // animation — used on open and as the tail end of the animated transition
+  // below (once the old photo has slid out, the swap itself should be instant).
+  function applyCurrent() {
+    const item = currentList[currentPos];
+    if (!item) return;
+    lightboxImage.src = item.dataset.full || '';
+    lightboxImage.alt = item.dataset.alt || '';
+    lightboxCaption.textContent = item.dataset.caption || '';
+  }
+
+  // direction: 1 = advancing to the next photo (content exits left, enters
+  // from the right), -1 = going back (exits right, enters from the left).
+  // Whatever transform is already on the image (e.g. mid-drag) is the start
+  // point, so a swipe that releases past the threshold continues its motion
+  // instead of snapping back and re-animating from zero.
+  function showCurrent(direction: number) {
+    if (prefersReducedMotion) {
+      applyCurrent();
+      return;
+    }
+    lightboxImage.style.transition = TRANSITION;
+    lightboxImage.style.transform = `translateX(${direction * -60}px)`;
+    lightboxImage.style.opacity = '0';
+    window.setTimeout(() => {
+      applyCurrent();
+      lightboxImage.style.transition = 'none';
+      lightboxImage.style.transform = `translateX(${direction * 60}px)`;
+      void lightboxImage.offsetWidth; // force reflow so the entrance transition runs
+      lightboxImage.style.transition = TRANSITION;
+      lightboxImage.style.transform = 'translateX(0)';
+      lightboxImage.style.opacity = '1';
+    }, 220);
+  }
+
+  function closeLightbox() {
+    lightbox.classList.add('hidden');
+    lightbox.classList.remove('flex');
+    document.body.style.overflow = '';
+    lightboxImage.style.transition = 'none';
+    lightboxImage.style.transform = '';
+    lightboxImage.style.opacity = '1';
+    lastFocused?.focus();
+  }
+
+  function next() {
+    currentPos = (currentPos + 1) % currentList.length;
+    showCurrent(1);
+  }
+  function prev() {
+    currentPos = (currentPos - 1 + currentList.length) % currentList.length;
+    showCurrent(-1);
+  }
+
+  items.forEach((item) => item.addEventListener('click', () => openLightbox(item)));
+  document.getElementById('lightbox-close')?.addEventListener('click', closeLightbox);
+  document.getElementById('lightbox-next')?.addEventListener('click', next);
+  document.getElementById('lightbox-prev')?.addEventListener('click', prev);
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (lightbox.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') prev();
+  });
+
+  // Swipe gestures — the image visibly follows the finger while dragging
+  // (not just a silent swipe-to-advance), so touch users can see the photo
+  // is draggable in both directions before they commit to a swipe. Past the
+  // threshold on release it continues on to the next/previous photo; short
+  // of that, it eases back to center.
+  let touchStartX = 0;
+  let touchDeltaX = 0;
+  let dragging = false;
+
+  lightbox.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchDeltaX = 0;
+    dragging = true;
+    lightboxImage.style.transition = 'none';
+  }, { passive: true });
+
+  lightbox.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    touchDeltaX = e.touches[0].clientX - touchStartX;
+    lightboxImage.style.transform = `translateX(${touchDeltaX}px)`;
+    lightboxImage.style.opacity = String(Math.max(0.5, 1 - Math.abs(touchDeltaX) / 500));
+  }, { passive: true });
+
+  lightbox.addEventListener('touchend', () => {
+    dragging = false;
+    if (Math.abs(touchDeltaX) > 50) {
+      touchDeltaX > 0 ? prev() : next();
+    } else {
+      lightboxImage.style.transition = TRANSITION;
+      lightboxImage.style.transform = 'translateX(0)';
+      lightboxImage.style.opacity = '1';
+    }
+  }, { passive: true });
+</script>

@@ -1,0 +1,84 @@
+highlights:
+  - icon: "court"
+    title: "Quality Pickleball Court"
+    description: "A covered, professionally lined court with proper lighting — built for real rallies, rain or shine."
+  - icon: "calendar"
+    title: "Easy Court Reservations"
+    description: "Reserve your preferred date and time online in minutes, with instant Pending Confirmation status."
+  - icon: "users"
+    title: "Friendly Community"
+    description: "From first-timers to club regulars, RC Rally Hub is a welcoming space to meet fellow players."
+  - icon: "trophy"
+    title: "Events and Tournaments"
+    description: "Open play, clinics, and tournaments happen regularly — there's always a reason to rally."
+whyChooseUs:
+  - icon: "court"
+    title: "Well-maintained pickleball court"
+    description: "A clean, properly lined, covered court maintained for consistent, quality play."
+    isPlaceholder: false
+  - icon: "light"
+    title: "Quality court lighting"
+    description: "Bright, even lighting keeps games going strong from morning sessions to late-night rallies."
+    isPlaceholder: false
+  - icon: "clock"
+    title: "Convenient daily operating hours"
+    description: "Open every day from 6:00 AM to 3:00 AM — early birds and night owls both welcome."
+    isPlaceholder: false
+  - icon: "calendar"
+    title: "Easy court reservations"
+    description: "A simple online booking flow gets your game on the schedule in just a few steps."
+    isPlaceholder: false
+  - icon: "users"
+    title: "Friendly pickleball community"
+    description: "Beginners and veterans alike will find a welcoming, encouraging crowd at RC Rally Hub."
+    isPlaceholder: false
+  - icon: "seat"
+    title: "Comfortable viewing area"
+    description: "Family and friends can relax courtside and cheer you on. (Seating details — confirm and update.)"
+    isPlaceholder: true
+  - icon: "heart"
+    title: "Beginner-friendly environment"
+    description: "New to pickleball? Our community and coaching options make it easy to start."
+    isPlaceholder: false
+  - icon: "trophy"
+    title: "Casual games and tournaments"
+    description: "Whether it's a relaxed weekend rally or a competitive bracket, we host it all."
+    isPlaceholder: false
+  - icon: "building"
+    title: "Group and private events"
+    description: "Book the whole court for your company, school, club, or celebration."
+    isPlaceholder: false
+  - icon: "map-pin"
+    title: "Convenient Iligan City location"
+    description: "Located inside Garahe by Chef Rods Restaurant in Pala-o — easy to find, easy to enjoy."
+    isPlaceholder: false
+stats:
+  - label: "Games Played"
+    value: 1200
+    suffix: "+"
+    isDummy: true
+  - label: "Happy Players"
+    value: 850
+    suffix: "+"
+    isDummy: true
+  - label: "Events Hosted"
+    value: 24
+    suffix: "+"
+    isDummy: true
+  - label: "Community Members"
+    value: 600
+    suffix: "+"
+    isDummy: true
+bookingSteps:
+  - step: 1
+    title: "Choose your date and time"
+    description: "Pick a business date and an available hourly slot — our schedule runs 6:00 AM to 3:00 AM, so late-night rallies are covered too."
+  - step: 2
+    title: "Select duration and options"
+    description: "Choose how long you'll play and add players, paddle or ball rental, or a coaching session."
+  - step: 3
+    title: "Enter your contact information"
+    description: "Tell us who's playing so we can confirm your reservation and reach you if needed."
+  - step: 4
+    title: "Submit and receive confirmation"
+    description: "You'll get a reference number instantly with Pending Confirmation status while our team finalizes your slot."

@@ -1,0 +1,142 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const events = await getCollection('events');
+  return events.filter((e) => e.data.published).map((event) => ({
+    params: { slug: event.slug },
+    props: { event },
+  }));
+}
+
+const { event } = Astro.props;
+const { Content } = await event.render();
+
+const dateObj = new Date(`${event.data.date}T00:00:00`);
+const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+function to12h(t: string) {
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+const eventSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: event.data.title,
+  startDate: `${event.data.date}T${event.data.startTime}:00+08:00`,
+  endDate: `${event.data.date}T${event.data.endTime}:00+08:00`,
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: event.data.status === 'Cancelled' ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+  location: {
+    '@type': 'Place',
+    name: 'RC Rally Hub by Garahe',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '#37 Seminary Drive, Pala-o',
+      addressLocality: 'Iligan City',
+      postalCode: '9200',
+      addressCountry: 'PH',
+    },
+  },
+  image: [event.data.image],
+  description: event.data.excerpt,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'PHP',
+    availability: event.data.status === 'Registration Open' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+    url: `https://rcrallyhub.netlify.app/events/${event.slug}`,
+  },
+};
+---
+<Layout
+  title={`${event.data.title} | RC Rally Hub Events`}
+  description={event.data.excerpt}
+  ogImage={event.data.image}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Events', url: '/events' }, { name: event.data.title, url: `/events/${event.slug}` }]}
+  structuredData={[eventSchema]}
+>
+  <section class="relative pt-8">
+    <div class="container-rc">
+      <nav aria-label="Breadcrumb" class="mb-6 text-xs text-rc-silver-dark font-heading uppercase tracking-wide">
+        <a href="/events" class="hover:text-rc-lime">Events</a> <span class="mx-1">/</span> <span class="text-rc-lime">{event.data.title}</span>
+      </nav>
+    </div>
+    <div class="container-rc grid lg:grid-cols-[1.3fr_0.9fr] gap-10">
+      <div class="reveal">
+        <div class="rounded-2xl overflow-hidden border border-white/10 mb-8 aspect-[16/10]">
+          <img src={event.data.image} alt={event.data.imageAlt || event.data.title} class="w-full h-full object-cover" />
+        </div>
+        <div class="flex flex-wrap gap-2 mb-5">
+          <span class="px-3 py-1 rounded-full bg-rc-lime text-rc-black text-xs font-heading font-bold uppercase">{event.data.status}</span>
+          <span class="px-3 py-1 rounded-full bg-rc-purple/20 border border-rc-purple/40 text-rc-purple-light text-xs font-heading font-bold uppercase">{event.data.category}</span>
+          <span class="px-3 py-1 rounded-full bg-white/10 text-rc-silver text-xs font-heading font-bold uppercase">{event.data.skillLevel}</span>
+        </div>
+        <h1 class="font-display font-extrabold uppercase text-4xl sm:text-5xl text-rc-white mb-6">{event.data.title}</h1>
+        <div class="prose-rc">
+          <Content />
+        </div>
+
+        {event.data.format && (
+          <div class="mt-8">
+            <h2 class="font-heading text-lg font-bold text-rc-lime mb-2">Format</h2>
+            <p class="text-rc-silver text-sm leading-relaxed">{event.data.format}</p>
+          </div>
+        )}
+        {event.data.rules && (
+          <div class="mt-6">
+            <h2 class="font-heading text-lg font-bold text-rc-lime mb-2">Rules</h2>
+            <p class="text-rc-silver text-sm leading-relaxed">{event.data.rules}</p>
+          </div>
+        )}
+        {event.data.prizes && (
+          <div class="mt-6">
+            <h2 class="font-heading text-lg font-bold text-rc-lime mb-2">Prizes</h2>
+            <p class="text-rc-silver text-sm leading-relaxed">{event.data.prizes}</p>
+          </div>
+        )}
+      </div>
+
+      <aside class="reveal" data-reveal-delay="100">
+        <div class="card-surface p-7 sticky top-24">
+          <h2 class="font-heading text-lg font-bold text-rc-white mb-5">Event Details</h2>
+          <dl class="space-y-4 text-sm">
+            <div class="flex gap-3">
+              <Icon name="calendar" class="w-5 h-5 text-rc-purple-light shrink-0" />
+              <div><dt class="text-rc-silver-dark text-xs uppercase">Date & Time</dt><dd class="text-rc-white">{dateLabel}<br/>{to12h(event.data.startTime)} – {to12h(event.data.endTime)}</dd></div>
+            </div>
+            {event.data.registrationDeadline && (
+              <div class="flex gap-3">
+                <Icon name="clock" class="w-5 h-5 text-rc-purple-light shrink-0" />
+                <div><dt class="text-rc-silver-dark text-xs uppercase">Registration Deadline</dt><dd class="text-rc-white">{new Date(`${event.data.registrationDeadline}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</dd></div>
+              </div>
+            )}
+            <div class="flex gap-3">
+              <Icon name="target" class="w-5 h-5 text-rc-purple-light shrink-0" />
+              <div><dt class="text-rc-silver-dark text-xs uppercase">Registration Fee</dt><dd class="text-rc-white">{event.data.fee}</dd></div>
+            </div>
+            {event.data.maxParticipants && (
+              <div class="flex gap-3">
+                <Icon name="users" class="w-5 h-5 text-rc-purple-light shrink-0" />
+                <div><dt class="text-rc-silver-dark text-xs uppercase">Slots Available</dt><dd class="text-rc-white">{event.data.availableSlots} / {event.data.maxParticipants}</dd></div>
+              </div>
+            )}
+          </dl>
+          <a href="/book" class="btn-primary w-full mt-7" data-ripple>Register / Book a Court</a>
+          <a href="/contact" class="btn-ghost w-full mt-3" data-ripple>Ask a Question</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24 mt-10">
+    <div class="container-rc text-center">
+      <a href="/events" class="text-rc-lime font-heading font-bold uppercase text-sm tracking-wide hover:underline">&larr; Back to all events</a>
+    </div>
+  </section>
+</Layout>

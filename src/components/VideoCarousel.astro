@@ -1,0 +1,152 @@
+---
+interface Video {
+  title: string;
+  description?: string;
+  approvedEmbedUrl: string;
+  posterImage: string;
+  posterImageAlt?: string;
+  category: string;
+}
+interface Props { videos: Video[]; id?: string }
+const { videos, id = 'video-carousel' } = Astro.props;
+
+// Only allow embeds from Facebook's own video plugin domain — never render
+// raw iframe HTML pasted directly from CMS input.
+function isApprovedEmbed(url: string) {
+  try {
+    const u = new URL(url);
+    return u.hostname === 'www.facebook.com' && u.pathname.startsWith('/plugins/video.php');
+  } catch {
+    return false;
+  }
+}
+---
+<div class="video-carousel-wrap relative" data-video-carousel>
+  <div class="swiper" id={id}>
+    <div class="swiper-wrapper">
+      {videos.map((video, i) => (
+        <div class="swiper-slide !w-[300px] sm:!w-[340px] lg:!w-[380px]">
+          <div class="rounded-2xl overflow-hidden border border-white/10 bg-rc-charcoal card-surface">
+            <div class="relative aspect-[9/16] bg-black" data-video-frame data-embed-url={isApprovedEmbed(video.approvedEmbedUrl) ? video.approvedEmbedUrl : ''}>
+              <img
+                src={video.posterImage}
+                alt={video.posterImageAlt || video.title}
+                class="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              <button
+                type="button"
+                class="video-play-btn absolute inset-0 w-full h-full flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors group"
+                aria-label={`Play video: ${video.title}`}
+              >
+                <span class="w-16 h-16 rounded-full bg-rc-lime/95 flex items-center justify-center shadow-glow-lime group-hover:scale-110 transition-transform">
+                  <svg class="w-6 h-6 text-rc-black ml-1" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </span>
+              </button>
+              <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-heading font-bold uppercase tracking-wide text-rc-lime">{video.category}</span>
+            </div>
+            <div class="p-4">
+              <h3 class="font-heading font-bold text-sm text-rc-white mb-1 line-clamp-2">{video.title}</h3>
+              {video.description && <p class="text-xs text-rc-silver-dark line-clamp-2">{video.description}</p>}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+  <button class="video-prev absolute left-0 top-[38%] -translate-y-1/2 -translate-x-2 sm:-translate-x-4 z-10 w-10 h-10 rounded-full bg-rc-black/80 border border-white/15 text-white flex items-center justify-center hover:border-rc-lime hover:text-rc-lime" aria-label="Previous video">
+    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="video-next absolute right-0 top-[38%] -translate-y-1/2 translate-x-2 sm:translate-x-4 z-10 w-10 h-10 rounded-full bg-rc-black/80 border border-white/15 text-white flex items-center justify-center hover:border-rc-lime hover:text-rc-lime" aria-label="Next video">
+    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="video-pagination flex justify-center gap-1.5 mt-5"></div>
+</div>
+
+<script>
+  async function initVideoCarousels() {
+    const wraps = document.querySelectorAll<HTMLElement>('[data-video-carousel]');
+    if (wraps.length === 0) return;
+    const { default: Swiper } = await import('swiper');
+    const { Navigation, Pagination, Keyboard, A11y } = await import('swiper/modules');
+
+    wraps.forEach((wrap) => {
+      const el = wrap.querySelector<HTMLElement>('.swiper');
+      if (!el) return;
+      new Swiper(el, {
+        modules: [Navigation, Pagination, Keyboard, A11y],
+        slidesPerView: 1.15,
+        spaceBetween: 18,
+        centeredSlides: false,
+        keyboard: { enabled: true },
+        a11y: { enabled: true },
+        navigation: {
+          nextEl: wrap.querySelector('.video-next'),
+          prevEl: wrap.querySelector('.video-prev'),
+        },
+        pagination: {
+          el: wrap.querySelector('.video-pagination'),
+          clickable: true,
+          bulletClass: 'inline-block w-2 h-2 rounded-full bg-white/20 cursor-pointer transition-colors',
+          bulletActiveClass: '!bg-rc-lime',
+        },
+        breakpoints: {
+          640: { slidesPerView: 1.8, spaceBetween: 20 },
+          1024: { slidesPerView: 2.6, spaceBetween: 24 },
+        },
+      });
+
+      // Click-to-play: only then inject the approved Facebook iframe (lazy load).
+      wrap.querySelectorAll<HTMLElement>('[data-video-frame]').forEach((frame) => {
+        const btn = frame.querySelector<HTMLButtonElement>('.video-play-btn');
+        btn?.addEventListener('click', () => {
+          const embedUrl = frame.dataset.embedUrl;
+          if (!embedUrl) return;
+          const iframe = document.createElement('iframe');
+          // Facebook's video plugin does not start playback on its own just
+          // because the iframe is inserted — it needs an explicit autoplay
+          // flag on the embed URL, otherwise clicking play just shows FB's
+          // own paused player and looks broken. Force it on here rather
+          // than relying on the CMS-stored URL to include it.
+          const url = new URL(embedUrl);
+          url.searchParams.set('autoplay', 'true');
+          iframe.src = url.toString();
+          iframe.className = 'absolute inset-0 w-full h-full';
+          iframe.setAttribute('allowfullscreen', 'true');
+          iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; web-share');
+          iframe.setAttribute('loading', 'lazy');
+          iframe.title = 'RC Rally Hub video';
+          frame.innerHTML = '';
+          frame.appendChild(iframe);
+        });
+      });
+    });
+  }
+
+  initVideoCarousels();
+
+  // Pause offscreen media when scrolled far away — remove iframes outside viewport for a while.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const frame = entry.target as HTMLElement;
+        if (!entry.isIntersecting) {
+          const iframe = frame.querySelector('iframe');
+          if (iframe && frame.dataset.embedUrl) {
+            // Leave DOM intact but drop src to stop playback/audio when far off-screen.
+            iframe.setAttribute('data-paused-src', iframe.src);
+            iframe.src = 'about:blank';
+          }
+        } else {
+          const iframe = frame.querySelector('iframe');
+          const pausedSrc = iframe?.getAttribute('data-paused-src');
+          if (iframe && pausedSrc) {
+            iframe.src = pausedSrc;
+            iframe.removeAttribute('data-paused-src');
+          }
+        }
+      });
+    }, { threshold: 0, rootMargin: '-20% 0px' });
+    document.querySelectorAll('[data-video-frame]').forEach((el) => io.observe(el));
+  }
+</script>

@@ -1,0 +1,6 @@
+question: "How do I reserve the court?"
+answer: "Head to our Book a Court page, choose your date and an available hourly time slot, select your duration and players, add any equipment or coaching options, then submit your details. You'll get a reference number instantly with Pending Confirmation status while our team finalizes your slot."
+category: "Booking"
+displayOrder: 1
+published: true
+useAsChatbotAnswer: true

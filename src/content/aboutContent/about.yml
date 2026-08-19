@@ -1,0 +1,29 @@
+values:
+  - title: "Community First"
+    description: "Every rally is a chance to meet someone new. We build our schedule and events around bringing players together."
+  - title: "Fair, Encouraging Play"
+    description: "From beginner-friendly sessions to competitive tournaments, everyone deserves a welcoming court."
+  - title: "Consistent Quality"
+    description: "A well-maintained, properly lined, well-lit court, every single day we're open."
+  - title: "Local Pride"
+    description: "Proud to be part of Iligan City's growing sports scene, based in Pala-o alongside Garahe by Chef Rods Restaurant."
+team:
+  - name: "Team Name Placeholder"
+    role: "Venue Manager"
+    photo: ""
+    isPlaceholder: true
+  - name: "Team Name Placeholder"
+    role: "Head Coach"
+    photo: ""
+    isPlaceholder: true
+  - name: "Team Name Placeholder"
+    role: "Community & Events Lead"
+    photo: ""
+    isPlaceholder: true
+partners:
+  - name: "Garahe by Chef Rods Restaurant"
+    description: "Our venue partner and host — great food right next to great games."
+    logo: ""
+  - name: "Local Pickleball Club Partner"
+    description: "Placeholder — add confirmed community and club partners here."
+    logo: ""

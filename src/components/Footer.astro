@@ -1,0 +1,95 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from './Icon.astro';
+
+const settingsEntries = await getCollection('settings');
+const settings = settingsEntries[0].data;
+const year = new Date().getFullYear();
+
+const columns = [
+  {
+    title: 'Explore',
+    links: [
+      { label: 'Home', href: '/' },
+      { label: 'Rates & Packages', href: '/rates' },
+      { label: 'Tournaments & Events', href: '/events' },
+      { label: 'Gallery', href: '/gallery' },
+      { label: 'Videos', href: '/videos' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'FAQs', href: '/faqs' },
+      { label: 'Contact Us', href: '/contact' },
+      { label: 'Cancellation & Rescheduling', href: '/cancellation-policy' },
+      { label: 'Terms & Conditions', href: '/terms' },
+      { label: 'Privacy Policy', href: '/privacy' },
+    ],
+  },
+];
+---
+
+<footer class="relative mt-24 border-t border-white/10 bg-rc-charcoal overflow-hidden">
+  <div class="absolute inset-0 bg-rc-radial-glow opacity-40 pointer-events-none" aria-hidden="true"></div>
+  <div class="container-rc relative py-14 grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+    <div>
+      <a href="/" class="flex items-center gap-2.5 mb-4" aria-label="RC Rally Hub — Home">
+        <img src={settings.logo} alt={`${settings.businessName} logo`} width="48" height="48" class="h-12 w-12 object-contain" />
+        <span class="flex flex-col leading-none">
+          <span class="font-display font-bold text-lg text-rc-white">RALLY HUB</span>
+          <span class="text-[10px] uppercase tracking-[0.25em] text-rc-lime font-heading">by Garahe</span>
+        </span>
+      </a>
+      <p class="text-sm text-rc-silver-dark leading-relaxed max-w-sm">{settings.footer?.description}</p>
+      <div class="flex items-center gap-3 mt-5">
+        <a href={settings.social?.facebook || '#'} target="_blank" rel="noopener noreferrer" aria-label="RC Rally Hub on Facebook" class="w-10 h-10 flex items-center justify-center rounded-full border border-white/15 text-rc-silver hover:text-rc-lime hover:border-rc-lime transition-colors">
+          <Icon name="facebook" class="w-4 h-4" />
+        </a>
+        <a href={settings.contact.messenger || '#'} target="_blank" rel="noopener noreferrer" aria-label="Message RC Rally Hub on Messenger" class="w-10 h-10 flex items-center justify-center rounded-full border border-white/15 text-rc-silver hover:text-rc-lime hover:border-rc-lime transition-colors">
+          <Icon name="messenger" class="w-4 h-4" />
+        </a>
+      </div>
+    </div>
+
+    {columns.map((col) => (
+      <div>
+        <h3 class="font-heading text-sm uppercase tracking-[0.2em] text-rc-lime mb-4">{col.title}</h3>
+        <ul class="space-y-2.5 text-sm">
+          {col.links.map((l) => (
+            <li><a href={l.href} class="text-rc-silver hover:text-rc-white transition-colors">{l.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+
+    <div>
+      <h3 class="font-heading text-sm uppercase tracking-[0.2em] text-rc-lime mb-4">Visit Us</h3>
+      <ul class="space-y-3 text-sm text-rc-silver">
+        <li class="flex gap-2.5"><Icon name="map-pin" class="w-4 h-4 shrink-0 mt-0.5 text-rc-purple-light" /><span>{settings.address}<br /><span class="text-rc-silver-dark">{settings.locationDescription}</span></span></li>
+        <li class="flex gap-2.5"><Icon name="clock" class="w-4 h-4 shrink-0 mt-0.5 text-rc-purple-light" /><span>{settings.operatingHours}</span></li>
+        <li class="flex gap-2.5">
+          <Icon name="phone" class="w-4 h-4 shrink-0 mt-0.5 text-rc-purple-light" />
+          <a href={`tel:${settings.contact.mobile.replace(/\s+/g, '')}`} class="hover:text-rc-white transition-colors">
+            {settings.contact.mobile}
+            {settings.contact.mobileIsDummy && <span class="ml-1.5 text-[10px] uppercase tracking-wide text-rc-lime/80">(dummy)</span>}
+          </a>
+        </li>
+        <li class="flex gap-2.5">
+          <Icon name="mail" class="w-4 h-4 shrink-0 mt-0.5 text-rc-purple-light" />
+          <a href={`mailto:${settings.contact.email}`} class="hover:text-rc-white transition-colors break-all">
+            {settings.contact.email}
+            {settings.contact.emailIsDummy && <span class="ml-1.5 text-[10px] uppercase tracking-wide text-rc-lime/80">(dummy)</span>}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="relative border-t border-white/10">
+    <div class="container-rc py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-rc-silver-dark">
+      <p>&copy; {year} {settings.footer?.copyrightName || settings.businessName}. All rights reserved.</p>
+      <p>Contact details marked "(dummy)" are placeholders — update them anytime in the Sveltia CMS admin dashboard.</p>
+    </div>
+  </div>
+</footer>

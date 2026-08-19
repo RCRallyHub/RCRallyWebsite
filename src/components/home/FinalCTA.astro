@@ -1,0 +1,19 @@
+---
+interface Props { heading: string; description: string }
+const { heading, description } = Astro.props;
+---
+<section class="relative py-28 overflow-hidden">
+  <div class="absolute inset-0">
+    <img src="/images/people/community-celebration-1920.webp" alt="" class="w-full h-full object-cover" loading="lazy" />
+    <div class="absolute inset-0 bg-rc-black/85"></div>
+    <div class="absolute inset-0 bg-rc-radial-glow"></div>
+  </div>
+  <div class="container-rc relative text-center max-w-2xl mx-auto reveal">
+    <h2 class="section-heading mb-5">{heading}</h2>
+    <p class="text-lg text-rc-silver leading-relaxed mb-10">{description}</p>
+    <div class="flex flex-wrap justify-center gap-4">
+      <a href="/book" class="btn-primary" data-ripple data-magnetic>Book Your Court</a>
+      <a href="/contact" class="btn-secondary" data-ripple data-magnetic>Send an Inquiry</a>
+    </div>
+  </div>
+</section>

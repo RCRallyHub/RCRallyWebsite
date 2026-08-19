@@ -1,0 +1,14 @@
+name: "Group Play Package"
+description: "Bring your barkada or club for an extended session at a better rate per player."
+price: "Contact us for group rates"
+billingUnit: "per group"
+peakOrOffPeak: "both"
+category: "group"
+features:
+  - "Best for groups of 6 or more"
+  - "Flexible duration options"
+  - "Ideal for club practice nights"
+isPlaceholderPrice: true
+displayOrder: 6
+featured: true
+published: true

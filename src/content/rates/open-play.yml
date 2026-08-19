@@ -1,0 +1,14 @@
+name: "Open Play Session"
+description: "Join a scheduled open-play block and get matched up with other players — no need to bring a full group."
+price: "Contact us for open play rates"
+billingUnit: "per player"
+peakOrOffPeak: "both"
+category: "open-play"
+features:
+  - "Meet other players and rotate matches"
+  - "Great for solo players and small groups"
+  - "Scheduled sessions throughout the week"
+isPlaceholderPrice: true
+displayOrder: 5
+featured: false
+published: true

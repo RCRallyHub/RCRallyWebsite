@@ -1,0 +1,14 @@
+name: "Equipment Rental"
+description: "Don't have your own gear yet? Rent a paddle and balls right at the venue."
+price: "Contact us for equipment rates"
+billingUnit: "per session"
+peakOrOffPeak: "n/a"
+category: "equipment"
+features:
+  - "Paddle rental available"
+  - "Ball rental available"
+  - "Great for beginners trying pickleball for the first time"
+isPlaceholderPrice: true
+displayOrder: 3
+featured: false
+published: true

@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import RateCard from '../RateCard.astro';
+
+const allRates = (await getCollection('rates')).filter((r) => r.data.published && r.data.featured).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+---
+<section class="py-24 sm:py-28 bg-rc-charcoal/40">
+  <div class="container-rc">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14 reveal">
+      <div>
+        <p class="eyebrow mb-5">Rates & Packages</p>
+        <h2 class="section-heading">Simple, Transparent Pricing</h2>
+      </div>
+      <a href="/rates" class="text-rc-lime font-heading font-bold uppercase text-sm tracking-wide flex items-center gap-2 hover:gap-3 transition-all">
+        See all rates
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {allRates.map((rate, i) => (
+        <RateCard
+          name={rate.data.name}
+          description={rate.data.description}
+          price={rate.data.price}
+          billingUnit={rate.data.billingUnit}
+          peakOrOffPeak={rate.data.peakOrOffPeak}
+          features={rate.data.features}
+          isPlaceholderPrice={rate.data.isPlaceholderPrice}
+          featured={i === 0}
+          index={i}
+        />
+      ))}
+    </div>
+  </div>
+</section>

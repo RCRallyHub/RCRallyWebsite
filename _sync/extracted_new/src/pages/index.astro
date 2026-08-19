@@ -1,0 +1,84 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/home/Hero.astro';
+import QuickHighlights from '../components/home/QuickHighlights.astro';
+import AboutPreview from '../components/home/AboutPreview.astro';
+import WhyChooseUs from '../components/home/WhyChooseUs.astro';
+import StatsCounter from '../components/home/StatsCounter.astro';
+import RatesPreview from '../components/home/RatesPreview.astro';
+import HowBookingWorks from '../components/home/HowBookingWorks.astro';
+import UpcomingEvents from '../components/home/UpcomingEvents.astro';
+import VideoCarousel from '../components/VideoCarousel.astro';
+import TestimonialCarousel from '../components/TestimonialCarousel.astro';
+import GalleryPreview from '../components/home/GalleryPreview.astro';
+import FinalCTA from '../components/home/FinalCTA.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'home')!;
+const { Content } = await page.render();
+
+const homeContentEntries = await getCollection('homeContent');
+const homeData = homeContentEntries[0].data;
+
+const settingsEntries = await getCollection('settings');
+const settings = settingsEntries[0].data;
+
+const videos = (await getCollection('videos')).filter((v) => v.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const testimonials = (await getCollection('testimonials')).filter((t) => t.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+---
+<Layout title={page.data.seoTitle || page.data.title} description={page.data.metaDescription || page.data.description || ''} ogImage={page.data.ogImage}>
+  <Hero
+    heading={page.data.heading}
+    subheading={page.data.subheading}
+    description={page.data.description}
+    heroImage={page.data.heroImage || '/images/people/mens-doubles-action.webp'}
+    heroImageAlt={page.data.heroImageAlt}
+    ctas={page.data.ctas || []}
+    bookingUrl={settings.bookingUrl}
+  />
+
+  <QuickHighlights highlights={homeData.highlights} />
+
+  <div class="prose-rc sr-only">
+    <Content />
+  </div>
+  <AboutPreview
+    heading="More Than a Court — It's Where the Rally Begins"
+    description="RC Rally Hub is a welcoming pickleball destination where players can compete, improve, meet new people, and enjoy memorable games with friends and family. Located inside Garahe by Chef Rods Restaurant in Pala-o, Iligan City, it is the perfect place to rally, play, and connect."
+  />
+
+  <WhyChooseUs items={homeData.whyChooseUs} />
+
+  <StatsCounter stats={homeData.stats} />
+
+  <RatesPreview />
+
+  <HowBookingWorks steps={homeData.bookingSteps} />
+
+  <UpcomingEvents />
+
+  <section class="py-24 sm:py-28 bg-rc-charcoal/40">
+    <div class="container-rc">
+      <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+        <p class="eyebrow mb-5 mx-auto w-fit">Straight From Facebook</p>
+        <h2 class="section-heading">Featured Videos</h2>
+      </div>
+      <VideoCarousel videos={videos.map((v) => v.data)} id="home-video-carousel" />
+    </div>
+  </section>
+
+  <section class="py-24 sm:py-28">
+    <div class="container-rc">
+      <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+        <p class="eyebrow mb-5 mx-auto w-fit">Player Stories</p>
+        <h2 class="section-heading">What Players Are Saying</h2>
+      </div>
+      <TestimonialCarousel testimonials={testimonials.map((t) => t.data)} />
+    </div>
+  </section>
+
+  <GalleryPreview />
+
+  <FinalCTA heading="READY TO START THE NEXT RALLY?" description="Reserve your court today and experience the energy, competition, and community at RC Rally Hub." />
+</Layout>

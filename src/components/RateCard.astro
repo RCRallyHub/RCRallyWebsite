@@ -1,0 +1,61 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  price: string;
+  billingUnit: string;
+  peakOrOffPeak: string;
+  features: string[];
+  isPlaceholderPrice: boolean;
+  featured?: boolean;
+  index?: number;
+  /** Lets a parent page (rates.astro) target this specific card's price/unit text from a client script — e.g. to swap in live pricing. Optional; unused by default. */
+  id?: string;
+}
+const { name, description, price, billingUnit, peakOrOffPeak, features, isPlaceholderPrice, featured = false, index = 0, id } = Astro.props;
+
+const badgeMap: Record<string, string> = {
+  peak: 'Peak Hours',
+  'off-peak': 'Off-Peak',
+  both: 'Peak & Off-Peak',
+  'n/a': '',
+};
+---
+<div
+  class:list={[
+    'tilt-card reveal relative rounded-2xl p-7 flex flex-col h-full transition-colors duration-300',
+    featured ? 'card-surface border-rc-lime/40 shadow-glow-lime/10' : 'card-surface hover:border-rc-purple/40',
+  ]}
+  data-reveal-delay={(index % 4) * 100}
+>
+  {featured && (
+    <span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-rc-lime text-rc-black text-[11px] font-heading font-bold uppercase tracking-wide">Popular</span>
+  )}
+  {badgeMap[peakOrOffPeak] && (
+    <span class="w-fit mb-4 px-3 py-1 rounded-full bg-rc-purple/15 border border-rc-purple/40 text-rc-purple-light text-[11px] font-heading font-bold uppercase tracking-wide">
+      {badgeMap[peakOrOffPeak]}
+    </span>
+  )}
+  <h3 class="font-heading text-xl font-bold text-rc-white mb-2">{name}</h3>
+  <p class="text-sm text-rc-silver leading-relaxed mb-5">{description}</p>
+  <div class="mb-5" id={id}>
+    <p class="font-display text-3xl font-extrabold text-rc-lime leading-tight" data-rate-price>{price}</p>
+    <p class="text-xs text-rc-silver-dark" data-rate-unit>
+      {billingUnit}
+      <span data-rate-placeholder-note>{isPlaceholderPrice ? ' · placeholder rate' : ''}</span>
+    </p>
+  </div>
+  {features.length > 0 && (
+    <ul class="space-y-2.5 mb-7 flex-1">
+      {features.map((f) => (
+        <li class="flex items-start gap-2 text-sm text-rc-silver">
+          <svg class="w-4 h-4 text-rc-lime shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {f}
+        </li>
+      ))}
+    </ul>
+  )}
+  <a href="/book" class:list={[featured ? 'btn-primary' : 'btn-ghost', 'mt-auto w-full']} data-ripple>
+    Book This Option
+  </a>
+</div>

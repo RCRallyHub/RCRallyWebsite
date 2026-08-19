@@ -1,0 +1,244 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from './Icon.astro';
+
+const settingsEntries = await getCollection('settings');
+const settings = settingsEntries[0].data;
+
+const navLinks = [
+  { label: 'Home', href: '/' },
+  { label: 'Book a Court', href: '/book' },
+  { label: 'Rates', href: '/rates' },
+  { label: 'Events', href: '/events' },
+  { label: 'Gallery', href: '/gallery' },
+  { label: 'Videos', href: '/videos' },
+  { label: 'About', href: '/about' },
+  { label: 'FAQs', href: '/faqs' },
+  { label: 'Contact', href: '/contact' },
+];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<header id="site-header" class="fixed top-0 inset-x-0 z-50 transition-all duration-300" data-scrolled="false">
+  {settings.announcementBar?.enabled && (
+    <div class="bg-rc-gradient-lime text-rc-black text-sm font-heading font-bold tracking-wide">
+      <div class="container-rc flex items-center justify-center py-1.5 text-center gap-2">
+        <a href={settings.announcementBar.link || '/book'} class="hover:underline">
+          {settings.announcementBar.message}
+        </a>
+      </div>
+    </div>
+  )}
+  <div id="header-bar" class="border-b border-white/0 bg-rc-black/0 transition-all duration-300">
+    <nav class="container-rc flex items-center justify-between py-3.5" aria-label="Primary">
+      <a href="/" class="flex items-center gap-2.5 group shrink-0" aria-label="RC Rally Hub — Home">
+        <img
+          src={settings.logo}
+          alt={`${settings.businessName} logo`}
+          width="56"
+          height="56"
+          class="h-12 w-12 sm:h-14 sm:w-14 object-contain transition-transform duration-300 group-hover:scale-105"
+        />
+        <span class="hidden sm:flex flex-col leading-none">
+          <span class="font-display font-bold text-lg tracking-wide text-rc-white">RALLY HUB</span>
+          <span class="text-[10px] uppercase tracking-[0.25em] text-rc-lime font-heading">by Garahe</span>
+        </span>
+      </a>
+
+      <ul class="hidden lg:flex items-center gap-1 font-heading text-sm font-semibold uppercase tracking-wide">
+        {navLinks.map((link) => {
+          const linkPath = link.href === '/' ? '/' : link.href.replace(/\/$/, '');
+          const isActive = currentPath === linkPath;
+          return (
+            <li>
+              <a
+                href={link.href}
+                class:list={[
+                  'relative px-3.5 py-2 inline-block transition-colors duration-200 nav-underline',
+                  isActive ? 'text-rc-lime' : 'text-rc-silver hover:text-rc-white',
+                ]}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {link.label}
+                <span
+                  class:list={[
+                    'absolute left-3.5 right-3.5 -bottom-0.5 h-0.5 rounded-full bg-rc-lime origin-left transition-transform duration-300',
+                    isActive ? 'scale-x-100' : 'scale-x-0',
+                  ]}
+                  aria-hidden="true"
+                ></span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div class="hidden lg:flex items-center gap-3">
+        <a href={`tel:${settings.contact.mobile.replace(/\s+/g, '')}`} class="text-rc-silver hover:text-rc-lime transition-colors" aria-label={`Call RC Rally Hub at ${settings.contact.mobile}`}>
+          <Icon name="phone" class="w-5 h-5" />
+        </a>
+        <a href="/book" class="btn-primary !py-2.5 !px-6 !text-sm" data-ripple>
+          {settings.bookingButtonText}
+        </a>
+      </div>
+
+      <button
+        id="mobile-menu-toggle"
+        type="button"
+        class="lg:hidden relative w-11 h-11 flex items-center justify-center rounded-lg border border-white/15 text-rc-white"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Open menu"
+      >
+        <Icon name="menu" class="w-6 h-6" ariaHidden={true} />
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- Mobile full-screen nav -->
+<div
+  id="mobile-menu"
+  class="fixed inset-0 z-[60] lg:hidden invisible opacity-0 transition-opacity duration-300"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Mobile navigation"
+>
+  <div id="mobile-menu-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <div
+    id="mobile-menu-panel"
+    class="absolute top-0 right-0 h-full w-[85%] max-w-sm bg-rc-charcoal border-l border-white/10 translate-x-full transition-transform duration-300 ease-out flex flex-col"
+  >
+    <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
+      <span class="font-display font-bold text-lg text-rc-white">MENU</span>
+      <button
+        id="mobile-menu-close"
+        type="button"
+        class="w-11 h-11 flex items-center justify-center rounded-lg border border-white/15 text-rc-white hover:text-rc-lime"
+        aria-label="Close menu"
+      >
+        <Icon name="close" class="w-6 h-6" />
+      </button>
+    </div>
+    <ul class="flex-1 overflow-y-auto px-3 py-4 space-y-1 font-heading uppercase tracking-wide">
+      {navLinks.map((link) => {
+        const linkPath = link.href === '/' ? '/' : link.href.replace(/\/$/, '');
+        const isActive = currentPath === linkPath;
+        return (
+          <li>
+            <a
+              href={link.href}
+              class:list={[
+                'mobile-nav-link flex items-center min-h-[44px] px-4 py-3 rounded-xl text-base font-semibold transition-colors',
+                isActive ? 'bg-rc-lime/15 text-rc-lime' : 'text-rc-silver hover:bg-white/5 hover:text-rc-white',
+              ]}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {link.label}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+    <div class="px-4 py-5 border-t border-white/10 space-y-3">
+      <a href="/book" class="btn-primary w-full" data-ripple>Book Now</a>
+      <div class="grid grid-cols-2 gap-3">
+        <a href={`tel:${settings.contact.mobile.replace(/\s+/g, '')}`} class="btn-ghost !text-xs">
+          <Icon name="phone" class="w-4 h-4" /> Call Us
+        </a>
+        <a href={settings.social?.facebook || '#'} target="_blank" rel="noopener noreferrer" class="btn-ghost !text-xs">
+          <Icon name="facebook" class="w-4 h-4" /> Facebook
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const header = document.getElementById('site-header');
+  const headerBar = document.getElementById('header-bar');
+
+  function onScroll() {
+    const scrolled = window.scrollY > 12;
+    headerBar?.classList.toggle('bg-rc-black/90', scrolled);
+    headerBar?.classList.toggle('backdrop-blur-md', scrolled);
+    headerBar?.classList.toggle('border-white/10', scrolled);
+    headerBar?.classList.toggle('shadow-[0_8px_30px_rgba(0,0,0,0.5)]', scrolled);
+    header?.setAttribute('data-scrolled', String(scrolled));
+  }
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // The header's real height varies (announcement bar on/off, logo size at
+  // different breakpoints), but <main> below it is compensating for a fixed
+  // header with padding-top. Rather than hardcode that padding and have it
+  // drift out of sync (causing the "menu overlaps content" bug), measure the
+  // actual rendered header height and publish it as a CSS custom property
+  // that Layout.astro's <main> consumes — so the two always stay in sync.
+  function setHeaderHeightVar() {
+    const h = header?.getBoundingClientRect().height ?? 96;
+    document.documentElement.style.setProperty('--header-height', `${Math.ceil(h)}px`);
+  }
+  setHeaderHeightVar();
+  if (header && 'ResizeObserver' in window) {
+    new ResizeObserver(setHeaderHeightVar).observe(header);
+  }
+  window.addEventListener('resize', setHeaderHeightVar);
+
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const closeBtn = document.getElementById('mobile-menu-close');
+  const menu = document.getElementById('mobile-menu');
+  const panel = document.getElementById('mobile-menu-panel');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  let lastFocused: HTMLElement | null = null;
+
+  function openMenu() {
+    lastFocused = document.activeElement as HTMLElement;
+    menu?.classList.remove('invisible', 'opacity-0');
+    requestAnimationFrame(() => {
+      panel?.classList.remove('translate-x-full');
+    });
+    toggle?.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    closeBtn?.focus();
+  }
+
+  function closeMenu() {
+    panel?.classList.add('translate-x-full');
+    toggle?.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      menu?.classList.add('invisible', 'opacity-0');
+    }, 300);
+    lastFocused?.focus();
+  }
+
+  toggle?.addEventListener('click', openMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+  backdrop?.addEventListener('click', closeMenu);
+
+  document.querySelectorAll('.mobile-nav-link').forEach((el) => {
+    el.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+      closeMenu();
+    }
+    // Basic focus trap while menu is open
+    if (e.key === 'Tab' && toggle?.getAttribute('aria-expanded') === 'true' && panel) {
+      const focusable = panel.querySelectorAll<HTMLElement>('a, button, input, [tabindex]:not([tabindex="-1"])');
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+</script>

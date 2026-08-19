@@ -1,0 +1,166 @@
+---
+interface Props {
+  offPeakRate: number;
+  peakRate: number;
+  /** Booking system's /book URL — used to derive its origin for a live pricing fetch. See src/lib/live-pricing.ts. */
+  bookingUrl?: string;
+}
+const { offPeakRate, peakRate, bookingUrl = '' } = Astro.props;
+---
+<div class="card-surface p-7 sm:p-9" data-pricing-calculator data-off-peak={offPeakRate} data-peak={peakRate} data-booking-url={bookingUrl}>
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="font-heading text-xl font-bold text-rc-white">Estimate Your Cost</h2>
+    <span class="text-[10px] uppercase tracking-wide text-rc-lime bg-rc-lime/10 border border-rc-lime/30 px-2 py-1 rounded-full" id="calc-badge">Demo Estimate</span>
+  </div>
+  <p class="text-sm text-rc-silver-dark mb-7" id="calc-description">This calculator uses placeholder rates for demonstration. Final pricing is confirmed when your booking is reviewed.</p>
+
+  <div class="grid sm:grid-cols-2 gap-5">
+    <div>
+      <label for="calc-date" class="block text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-1.5">Date</label>
+      <input type="date" id="calc-date" class="form-input" />
+    </div>
+    <div>
+      <label for="calc-time" class="block text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-1.5">Start Time</label>
+      <select id="calc-time" class="form-input"></select>
+    </div>
+    <div>
+      <label for="calc-duration" class="block text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-1.5">Duration</label>
+      <select id="calc-duration" class="form-input">
+        <option value="1">1 hour</option>
+        <option value="1.5">1.5 hours</option>
+        <option value="2">2 hours</option>
+        <option value="3">3 hours</option>
+      </select>
+    </div>
+    <div>
+      <label for="calc-players" class="block text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-1.5">Number of Players</label>
+      <input type="number" id="calc-players" min="1" max="20" value="4" class="form-input" />
+    </div>
+  </div>
+
+  <fieldset class="mt-6">
+    <legend class="text-xs font-heading uppercase tracking-wide text-rc-silver-dark mb-2">Equipment & Add-ons (demo pricing)</legend>
+    <div class="grid sm:grid-cols-3 gap-3">
+      <label class="calc-checkbox">
+        <input type="checkbox" data-addon="150" />
+        <span>Paddle Rental <em>(₱150 demo)</em></span>
+      </label>
+      <label class="calc-checkbox">
+        <input type="checkbox" data-addon="100" />
+        <span>Ball Set Rental <em>(₱100 demo)</em></span>
+      </label>
+      <label class="calc-checkbox">
+        <input type="checkbox" data-addon="500" />
+        <span>Coaching Add-on <em>(₱500 demo)</em></span>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-rc-silver-dark">Estimated Total</p>
+      <p class="font-display text-4xl font-extrabold text-rc-lime" id="calc-total">₱0</p>
+      <p class="text-xs text-rc-silver-dark mt-1" id="calc-breakdown"></p>
+    </div>
+    <a href="/book" class="btn-primary" data-ripple id="calc-book-link">Book This Estimate</a>
+  </div>
+</div>
+
+<style>
+  .form-input {
+    @apply w-full min-h-[44px] rounded-lg bg-white/5 border border-white/15 px-3.5 text-sm text-rc-white focus:outline-none focus:border-rc-lime;
+  }
+  .calc-checkbox {
+    @apply flex items-center gap-2 text-sm text-rc-silver rounded-lg border border-white/10 px-3 py-2.5 cursor-pointer hover:border-rc-lime/40 transition-colors;
+  }
+  .calc-checkbox em { @apply text-rc-silver-dark not-italic text-xs; }
+</style>
+
+<script>
+  import { generateTimeSlots } from '../lib/booking-time';
+  import { fetchLivePricing, isPeakHour, type LivePricing } from '../lib/live-pricing';
+
+  const root = document.querySelector('[data-pricing-calculator]') as HTMLElement;
+  if (root) {
+    let offPeak = Number(root.dataset.offPeak || '250');
+    let peak = Number(root.dataset.peak || '350');
+    let livePricing: LivePricing | null = null;
+    const dateInput = document.getElementById('calc-date') as HTMLInputElement;
+    const timeSelect = document.getElementById('calc-time') as HTMLSelectElement;
+    const durationSelect = document.getElementById('calc-duration') as HTMLSelectElement;
+    const totalEl = document.getElementById('calc-total') as HTMLElement;
+    const breakdownEl = document.getElementById('calc-breakdown') as HTMLElement;
+    const bookLink = document.getElementById('calc-book-link') as HTMLAnchorElement;
+    const addonBoxes = root.querySelectorAll<HTMLInputElement>('[data-addon]');
+    const badgeEl = document.getElementById('calc-badge') as HTMLElement;
+    const descriptionEl = document.getElementById('calc-description') as HTMLElement;
+
+    function todayISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Slot peak/off-peak flag: use the live off-peak window when available
+    // (it can differ from booking-time.ts's hardcoded demo PEAK_HOURS),
+    // otherwise fall back to each slot's own demo classification.
+    function isSlotPeak(slot: { start: Date; isPeak: boolean }) {
+      return livePricing ? isPeakHour(slot.start.getHours(), livePricing) : slot.isPeak;
+    }
+
+    function populateSlots() {
+      const dateVal = dateInput.value || todayISO();
+      timeSelect.innerHTML = '';
+      generateTimeSlots(dateVal).forEach((slot) => {
+        const opt = document.createElement('option');
+        opt.value = String(slot.index);
+        const slotIsPeak = isSlotPeak(slot);
+        opt.dataset.peak = String(slotIsPeak);
+        opt.textContent = slot.startLabel + (slotIsPeak ? ' · Peak' : ' · Off-Peak') + (slot.isNextCalendarDay ? ' (next day)' : '');
+        timeSelect.appendChild(opt);
+      });
+      calculate();
+    }
+
+    function calculate() {
+      const duration = Number(durationSelect.value);
+      const selectedOption = timeSelect.selectedOptions[0];
+      const isPeak = selectedOption?.dataset.peak === 'true';
+      const rate = isPeak ? peak : offPeak;
+      const courtCost = rate * duration;
+      let addonsCost = 0;
+      addonBoxes.forEach((box) => {
+        if (box.checked) addonsCost += Number(box.dataset.addon || '0');
+      });
+      const total = courtCost + addonsCost;
+      totalEl.textContent = `₱${total.toLocaleString()}`;
+      breakdownEl.textContent = `₱${rate}/hr × ${duration}h (${isPeak ? 'peak' : 'off-peak'}) + ₱${addonsCost} add-ons`;
+
+      const params = new URLSearchParams();
+      params.set('date', dateInput.value || todayISO());
+      params.set('slot', selectedOption?.value || '11');
+      params.set('duration', durationSelect.value);
+      bookLink.href = `/book?${params.toString()}`;
+    }
+
+    dateInput.min = todayISO();
+    dateInput.value = todayISO();
+    populateSlots();
+
+    dateInput.addEventListener('change', populateSlots);
+    timeSelect.addEventListener('change', calculate);
+    durationSelect.addEventListener('change', calculate);
+    addonBoxes.forEach((box) => box.addEventListener('change', calculate));
+
+    // Upgrade to live rates once available. Everything above already works
+    // correctly with placeholder demo rates if this never resolves.
+    fetchLivePricing(root.dataset.bookingUrl).then((pricing) => {
+      if (!pricing) return;
+      livePricing = pricing;
+      offPeak = pricing.offPeakPricePerHour;
+      peak = pricing.peakPricePerHour;
+      if (badgeEl) badgeEl.textContent = 'Live Rates';
+      if (descriptionEl) descriptionEl.textContent = 'This calculator uses live rates from our booking system. Final pricing is confirmed when your booking is reviewed.';
+      populateSlots();
+    });
+  }
+</script>

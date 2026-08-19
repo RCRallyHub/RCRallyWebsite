@@ -1,0 +1,75 @@
+---
+import { SITE_URL } from '../../astro.config.mjs';
+import { getCollection } from 'astro:content';
+
+const settingsEntries = await getCollection('settings');
+const settings = settingsEntries[0].data;
+
+interface Props {
+  breadcrumbs?: { name: string; url: string }[];
+  extra?: Record<string, any>[];
+}
+const { breadcrumbs, extra = [] } = Astro.props;
+
+const localBusiness = {
+  '@context': 'https://schema.org',
+  '@type': ['SportsActivityLocation', 'LocalBusiness'],
+  name: settings.businessName,
+  image: new URL(settings.logo, SITE_URL).toString(),
+  '@id': SITE_URL,
+  url: SITE_URL,
+  telephone: settings.contact.mobile,
+  priceRange: '₱₱',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '#37 Seminary Drive, Pala-o',
+    addressLocality: 'Iligan City',
+    addressRegion: 'Lanao del Norte',
+    postalCode: '9200',
+    addressCountry: 'PH',
+  },
+  description: settings.defaultSeo?.metaDescription,
+  openingHoursSpecification: [
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      opens: '06:00',
+      closes: '23:59',
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      opens: '00:00',
+      closes: '03:00',
+    },
+  ],
+  sameAs: [settings.social?.facebook].filter(Boolean),
+};
+
+const website = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: settings.businessName,
+  url: SITE_URL,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${SITE_URL}/faqs?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
+};
+
+const breadcrumbList = breadcrumbs && breadcrumbs.length > 0 ? {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((b, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: b.name,
+    item: new URL(b.url, SITE_URL).toString(),
+  })),
+} : null;
+---
+<script type="application/ld+json" set:html={JSON.stringify(localBusiness)} />
+<script type="application/ld+json" set:html={JSON.stringify(website)} />
+{breadcrumbList && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbList)} />}
+{extra.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}

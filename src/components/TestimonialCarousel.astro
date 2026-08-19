@@ -1,0 +1,100 @@
+---
+interface Testimonial {
+  customerName: string;
+  customerType: string;
+  avatar?: string;
+  rating: number;
+  testimonial: string;
+}
+interface Props { testimonials: Testimonial[] }
+const { testimonials } = Astro.props;
+
+function initials(name: string) {
+  return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+}
+---
+<div class="testimonial-carousel-wrap relative" data-testimonial-carousel>
+  <div class="swiper" id="testimonial-swiper">
+    <div class="swiper-wrapper items-stretch">
+      {testimonials.map((t) => (
+        <div class="swiper-slide h-auto py-2">
+          <div class="card-surface p-7 h-full flex flex-col">
+            <div class="flex items-center gap-1 mb-4" aria-label={`${t.rating} out of 5 stars`}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <svg class:list={['w-4 h-4', i < t.rating ? 'text-rc-lime' : 'text-white/15']} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.4 7 .7-5.3 4.7 1.6 7-6.2-3.7L6 20.8l1.6-7L2.3 9.1l7-.7L12 2z"/></svg>
+              ))}
+            </div>
+            <p class="text-rc-silver leading-relaxed mb-6 flex-1">&ldquo;{t.testimonial}&rdquo;</p>
+            <div class="flex items-center gap-3">
+              {t.avatar ? (
+                <img src={t.avatar} alt="" class="w-11 h-11 rounded-full object-cover" loading="lazy" />
+              ) : (
+                <div class="w-11 h-11 rounded-full bg-rc-gradient flex items-center justify-center text-white font-heading font-bold text-sm">{initials(t.customerName)}</div>
+              )}
+              <div>
+                <p class="font-heading font-bold text-rc-white text-sm">{t.customerName}</p>
+                <p class="text-xs text-rc-silver-dark">{t.customerType}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+  <div class="flex items-center justify-center gap-4 mt-8">
+    <button class="testimonial-prev w-11 h-11 rounded-full bg-white/5 border border-white/15 text-white flex items-center justify-center hover:border-rc-lime hover:text-rc-lime" aria-label="Previous testimonial">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="testimonial-pagination flex gap-1.5"></div>
+    <button class="testimonial-next w-11 h-11 rounded-full bg-white/5 border border-white/15 text-white flex items-center justify-center hover:border-rc-lime hover:text-rc-lime" aria-label="Next testimonial">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  async function initTestimonials() {
+    const wrap = document.querySelector<HTMLElement>('[data-testimonial-carousel]');
+    if (!wrap) return;
+    const el = wrap.querySelector<HTMLElement>('.swiper');
+    if (!el) return;
+    const { default: Swiper } = await import('swiper');
+    const { Navigation, Pagination, Keyboard, A11y, Autoplay } = await import('swiper/modules');
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const swiper = new Swiper(el, {
+      modules: [Navigation, Pagination, Keyboard, A11y, Autoplay],
+      slidesPerView: 1,
+      spaceBetween: 20,
+      loop: true,
+      speed: 650,
+      keyboard: { enabled: true },
+      a11y: { enabled: true },
+      navigation: {
+        nextEl: wrap.querySelector('.testimonial-next'),
+        prevEl: wrap.querySelector('.testimonial-prev'),
+      },
+      pagination: {
+        el: wrap.querySelector('.testimonial-pagination'),
+        clickable: true,
+        bulletClass: 'inline-block w-2 h-2 rounded-full bg-white/20 cursor-pointer transition-colors',
+        bulletActiveClass: '!bg-rc-lime',
+      },
+      autoplay: reduced ? false : { delay: 7000, disableOnInteraction: false, pauseOnMouseEnter: true },
+      breakpoints: {
+        768: { slidesPerView: 2 },
+        1280: { slidesPerView: 3 },
+      },
+    });
+
+    // Pause on keyboard focus within the carousel, and when tab is hidden.
+    el.addEventListener('focusin', () => swiper.autoplay?.stop());
+    el.addEventListener('focusout', () => { if (!reduced) swiper.autoplay?.start(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) swiper.autoplay?.stop();
+      else if (!reduced) swiper.autoplay?.start();
+    });
+  }
+  initTestimonials();
+</script>

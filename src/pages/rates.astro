@@ -1,0 +1,153 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import RateCard from '../components/RateCard.astro';
+import PricingCalculator from '../components/PricingCalculator.astro';
+import Icon from '../components/Icon.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'rates')!;
+
+const settingsEntries = await getCollection('settings');
+const bookingUrl = settingsEntries[0].data.bookingUrl;
+
+const rates = (await getCollection('rates')).filter((r) => r.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const policies = await getCollection('policies');
+const bookingRules = policies.find((p) => p.slug === 'booking-rules')!;
+const { Content: BookingRulesContent } = await bookingRules.render();
+
+function extractNumber(str: string, fallback: number) {
+  const match = str.match(/[\d,]+/);
+  return match ? Number(match[0].replace(/,/g, '')) : fallback;
+}
+const offPeak = rates.find((r) => r.id === 'off-peak-hourly');
+const peak = rates.find((r) => r.id === 'peak-hourly');
+const offPeakRate = extractNumber(offPeak?.data.price || '', 250);
+const peakRate = extractNumber(peak?.data.price || '', 350);
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Rates', url: '/rates' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} compact />
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {rates.map((rate, i) => (
+          <RateCard
+            id={rate.id === 'off-peak-hourly' ? 'rate-off-peak' : rate.id === 'peak-hourly' ? 'rate-peak' : undefined}
+            name={rate.data.name}
+            description={rate.data.description}
+            price={rate.data.price}
+            billingUnit={rate.data.billingUnit}
+            peakOrOffPeak={rate.data.peakOrOffPeak}
+            features={rate.data.features}
+            isPlaceholderPrice={rate.data.isPlaceholderPrice}
+            featured={rate.data.featured}
+            index={i}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24 bg-rc-charcoal/40">
+    <div class="container-rc max-w-3xl mx-auto reveal">
+      <div class="text-center mb-10">
+        <p class="eyebrow mb-5 mx-auto w-fit">Try It Yourself</p>
+        <h2 class="section-heading">Pricing Calculator</h2>
+      </div>
+      <PricingCalculator offPeakRate={offPeakRate} peakRate={peakRate} bookingUrl={bookingUrl} />
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24">
+    <div class="container-rc grid lg:grid-cols-2 gap-10">
+      <div class="reveal">
+        <h2 class="font-heading text-2xl font-bold text-rc-white mb-5 flex items-center gap-2">
+          <Icon name="info" class="w-5 h-5 text-rc-lime" /> Booking Rules & Policies
+        </h2>
+        <div class="prose-rc card-surface p-7">
+          <BookingRulesContent />
+        </div>
+      </div>
+      <div class="reveal space-y-5" data-reveal-delay="100">
+        <div class="card-surface p-6" id="payment-methods-card">
+          <h3 class="font-heading font-bold text-rc-white mb-2">Payment Methods</h3>
+          <p class="text-sm text-rc-silver" id="payment-methods-text">Accepted payment methods will be confirmed by our team when your booking is finalized. <span class="text-rc-lime/80 text-xs uppercase" id="payment-methods-placeholder-note">(placeholder — update in CMS)</span></p>
+        </div>
+        <div class="card-surface p-6">
+          <h3 class="font-heading font-bold text-rc-white mb-2">Cancellations, Rescheduling & Refunds</h3>
+          <p class="text-sm text-rc-silver">See our full <a href="/cancellation-policy" class="text-rc-lime underline underline-offset-4">Cancellation & Rescheduling Policy</a> for cutoff windows and refund terms.</p>
+        </div>
+        <div class="card-surface p-6">
+          <h3 class="font-heading font-bold text-rc-white mb-2">Late Arrivals</h3>
+          <p class="text-sm text-rc-silver">Please arrive on time — sessions starting more than 15 minutes late without notice may be treated as a no-show per our cancellation policy.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 relative overflow-hidden">
+    <div class="absolute inset-0 bg-rc-gradient opacity-90"></div>
+    <div class="container-rc relative text-center max-w-xl mx-auto reveal">
+      <h2 class="section-heading mb-5">Need a Custom Package?</h2>
+      <p class="text-white/85 mb-8">Corporate events, tournaments, and private bookings get custom pricing — just reach out.</p>
+      <a href="/contact" class="btn-primary bg-white text-rc-black hover:bg-white/90" data-ripple data-magnetic>Contact Us</a>
+    </div>
+  </section>
+
+  <!-- Carries bookingUrl into the client script below without breaking Astro's
+       normal module bundling (a `define:vars` script can't use static
+       `import` — it's injected as a raw, unprocessed inline script). -->
+  <span id="rates-live-pricing-config" data-booking-url={bookingUrl} class="hidden" aria-hidden="true"></span>
+</Layout>
+
+<script>
+  import { fetchLivePricing, formatPeso } from '../lib/live-pricing';
+
+  // Swaps the static/CMS-authored off-peak/peak rate cards and payment
+  // methods card for live values from the booking system, once available.
+  // Everything above already renders correctly with no JS and no reachable
+  // booking system — this only ever upgrades that content in place, never
+  // shows an error if the fetch fails.
+  const configEl = document.getElementById('rates-live-pricing-config');
+  const bookingUrl = configEl?.dataset.bookingUrl;
+
+  fetchLivePricing(bookingUrl).then((pricing) => {
+    if (!pricing) return;
+
+    const offPeakCard = document.getElementById('rate-off-peak');
+    const peakCard = document.getElementById('rate-peak');
+    if (offPeakCard) {
+      const priceEl = offPeakCard.querySelector('[data-rate-price]');
+      const noteEl = offPeakCard.querySelector('[data-rate-placeholder-note]');
+      if (priceEl) priceEl.textContent = formatPeso(pricing.offPeakPricePerHour);
+      if (noteEl) noteEl.textContent = '';
+    }
+    if (peakCard) {
+      const priceEl = peakCard.querySelector('[data-rate-price]');
+      const noteEl = peakCard.querySelector('[data-rate-placeholder-note]');
+      if (priceEl) priceEl.textContent = formatPeso(pricing.peakPricePerHour);
+      if (noteEl) noteEl.textContent = '';
+    }
+
+    const paymentText = document.getElementById('payment-methods-text');
+    const paymentNote = document.getElementById('payment-methods-placeholder-note');
+    if (paymentText) {
+      if (pricing.paymentMethod === 'gcash' && (pricing.gcashName || pricing.gcashNumber)) {
+        paymentText.textContent = `We accept GCash. Send to ${[pricing.gcashName, pricing.gcashNumber].filter(Boolean).join(' — ')}. Upload your receipt on the booking confirmation page and we'll verify it before approving.`;
+      } else if (pricing.paymentMethod === 'bank_transfer' && (pricing.bankName || pricing.bankAccountName || pricing.bankAccountNumber)) {
+        const parts = [pricing.bankName, pricing.bankAccountName, pricing.bankAccountNumber].filter(Boolean).join(' — ');
+        paymentText.textContent = `We accept bank transfer. Send to ${parts}. Upload your receipt on the booking confirmation page and we'll verify it before approving.`;
+      } else {
+        paymentText.textContent = 'Accepted payment methods will be confirmed by our team when your booking is finalized.';
+      }
+      if (paymentNote) paymentNote.textContent = '';
+    }
+  });
+</script>

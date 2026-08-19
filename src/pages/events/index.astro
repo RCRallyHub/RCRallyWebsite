@@ -1,0 +1,108 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
+import EventCard from '../../components/EventCard.astro';
+import Icon from '../../components/Icon.astro';
+import { getCollection } from 'astro:content';
+
+const pageEntries = await getCollection('pages');
+const page = pageEntries.find((p) => p.slug === 'events')!;
+
+const events = (await getCollection('events')).filter((e) => e.data.published).sort((a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime());
+const statuses = ['All', ...Array.from(new Set(events.map((e) => e.data.status)))];
+---
+<Layout
+  title={page.data.seoTitle || page.data.title}
+  description={page.data.metaDescription || page.data.description || ''}
+  ogImage={page.data.ogImage}
+  breadcrumbs={[{ name: 'Home', url: '/' }, { name: 'Events', url: '/events' }]}
+>
+  <PageHero heading={page.data.heading} subheading={page.data.subheading} description={page.data.description} heroImage={page.data.heroImage} heroImageAlt={page.data.heroImageAlt} compact />
+
+  <section class="py-16 sm:py-20" data-events-root>
+    <div class="container-rc">
+      <div class="flex flex-wrap justify-center gap-2 mb-12 reveal">
+        {statuses.map((s, i) => (
+          <button type="button" class:list={['events-filter-btn', i === 0 && 'active']} data-status={s}>{s}</button>
+        ))}
+      </div>
+      <div id="events-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.map((event, i) => (
+          <div class="event-filter-item" data-status={event.data.status}>
+            <EventCard
+              slug={event.slug}
+              title={event.data.title}
+              image={event.data.image}
+              imageAlt={event.data.imageAlt}
+              excerpt={event.data.excerpt}
+              date={event.data.date}
+              startTime={event.data.startTime}
+              endTime={event.data.endTime}
+              category={event.data.category}
+              skillLevel={event.data.skillLevel}
+              fee={event.data.fee}
+              availableSlots={event.data.availableSlots}
+              maxParticipants={event.data.maxParticipants}
+              status={event.data.status}
+              index={i}
+            />
+          </div>
+        ))}
+      </div>
+      <p id="events-empty" class="hidden text-center text-rc-silver-dark py-16">No events match this filter right now.</p>
+    </div>
+  </section>
+
+  <section class="py-20 sm:py-24 bg-rc-charcoal/40">
+    <div class="container-rc grid lg:grid-cols-2 gap-10 items-center">
+      <div class="reveal">
+        <p class="eyebrow mb-5">Host With Us</p>
+        <h2 class="section-heading mb-5">Bring Your Group to RC Rally Hub</h2>
+        <p class="text-rc-silver leading-relaxed mb-6">Companies, schools, clubs, and private groups can organize tournaments, clinics, or private events at RC Rally Hub. We'll help coordinate scheduling, equipment, and format so your event runs smoothly.</p>
+        <a href="/contact" class="btn-primary" data-ripple>Inquire About an Event</a>
+      </div>
+      <div class="reveal grid grid-cols-2 gap-4" data-reveal-delay="100">
+        {['building', 'users', 'trophy', 'heart'].map((icon) => (
+          <div class="card-surface p-6 text-center">
+            <Icon name={icon} class="w-8 h-8 text-rc-lime mx-auto mb-3" />
+            <p class="text-xs uppercase tracking-wide text-rc-silver">
+              {icon === 'building' ? 'Corporate Events' : icon === 'users' ? 'Club Tournaments' : icon === 'trophy' ? 'Competitive Brackets' : 'Private Celebrations'}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .events-filter-btn {
+    @apply px-4 py-2 rounded-full text-xs font-heading font-bold uppercase tracking-wide border border-white/15 text-rc-silver transition-colors;
+    min-height: 40px;
+  }
+  .events-filter-btn.active, .events-filter-btn:hover {
+    @apply border-rc-lime text-rc-lime bg-rc-lime/10;
+  }
+</style>
+
+<script>
+  const root = document.querySelector('[data-events-root]') as HTMLElement;
+  const btns = root.querySelectorAll<HTMLButtonElement>('.events-filter-btn');
+  const items = root.querySelectorAll<HTMLElement>('.event-filter-item');
+  const empty = document.getElementById('events-empty') as HTMLElement;
+
+  btns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      btns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const status = btn.dataset.status;
+      let visible = 0;
+      items.forEach((item) => {
+        const show = status === 'All' || item.dataset.status === status;
+        item.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+      empty.classList.toggle('hidden', visible > 0);
+    });
+  });
+</script>

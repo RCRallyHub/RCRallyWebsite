@@ -1,0 +1,6 @@
+question: "Do you accept walk-ins?"
+answer: "Walk-ins are welcome when the court is available, but we recommend booking online first to guarantee your preferred time slot, especially during peak hours."
+category: "Booking"
+displayOrder: 8
+published: true
+useAsChatbotAnswer: true

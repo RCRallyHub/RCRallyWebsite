@@ -1,0 +1,33 @@
+---
+interface Props {
+  heading: string;
+  subheading?: string;
+  description?: string;
+  heroImage?: string;
+  heroImageAlt?: string;
+  compact?: boolean;
+  breadcrumbLabel?: string;
+}
+const { heading, subheading, description, heroImage, heroImageAlt, compact = false, breadcrumbLabel } = Astro.props;
+---
+<section class:list={['relative overflow-hidden bg-rc-charcoal', compact ? 'py-16 sm:py-20' : 'py-20 sm:py-28']}>
+  {heroImage && (
+    <div class="absolute inset-0">
+      <img src={heroImage} alt={heroImageAlt || ''} class="w-full h-full object-cover opacity-25" loading="eager" fetchpriority="high" />
+      <div class="absolute inset-0 bg-gradient-to-b from-rc-black/40 via-rc-charcoal/85 to-rc-charcoal"></div>
+    </div>
+  )}
+  <div class="absolute inset-0 court-lines-bg opacity-[0.04]" aria-hidden="true"></div>
+  <div class="container-rc relative">
+    <nav aria-label="Breadcrumb" class="mb-6 reveal">
+      <ol class="flex items-center gap-2 text-xs text-rc-silver-dark font-heading uppercase tracking-wide">
+        <li><a href="/" class="hover:text-rc-lime transition-colors">Home</a></li>
+        <li aria-hidden="true">/</li>
+        <li class="text-rc-lime" aria-current="page">{breadcrumbLabel || heading}</li>
+      </ol>
+    </nav>
+    {subheading && <p class="eyebrow mb-5 reveal">{subheading}</p>}
+    <h1 class="font-display font-extrabold uppercase text-4xl sm:text-5xl md:text-6xl text-rc-white max-w-3xl reveal" data-reveal-delay="80">{heading}</h1>
+    {description && <p class="mt-5 text-lg text-rc-silver max-w-2xl leading-relaxed reveal" data-reveal-delay="150">{description}</p>}
+  </div>
+</section>
