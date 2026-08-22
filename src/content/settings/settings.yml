@@ -27,7 +27,7 @@ announcementBar:
   message: 🏓 Now open at our new covered court in Pala-o, Iligan City — book your rally today!
   link: /book
 bookingButtonText: Book a Court
-bookingUrl: https://rcrallyhub.togglebook.com
+bookingUrl: https://rcrallyhub.togglebook.com/book
 footer:
   description: RC Rally Hub is Iligan City's premier pickleball destination — a covered court for casual games, training, tournaments, and community events, located inside Garahe by Chef Rods Restaurant.
   copyrightName: RC Rally Hub by Garahe
