@@ -1,41 +1,37 @@
-businessName: "RC Rally Hub by Garahe"
-tagline: "Rally. Play. Connect."
-logo: "/images/logo/rc-rally-hub-logo.webp"
-favicon: "/favicon.ico"
-address: "#37 Seminary Drive, Pala-o, Iligan City, Philippines 9200"
-locationDescription: "Inside Garahe by Chef Rods Restaurant"
-operatingHours: "Monday to Sunday, 6:00 AM – 3:00 AM"
-operatingHoursStart: "06:00"
-operatingHoursEnd: "03:00"
+businessName: RC Rally Hub by Garahe
+tagline: Rally. Play. Connect.
+logo: /images/logo/rc-rally-hub-logo.webp
+favicon: /favicon.ico
+address: '#37 Seminary Drive, Pala-o, Iligan City, Philippines 9200'
+locationDescription: Inside Garahe by Chef Rods Restaurant
+operatingHours: Monday to Sunday, 24/7
+operatingHoursStart: 06:00
+operatingHoursEnd: 06:00
 contact:
-  mobile: "0917 555 7288"
-  mobileIsDummy: true
-  email: "play@rcrallyhub.com"
-  emailIsDummy: true
-  facebook: "facebook.com/RCRallyHub"
-  facebookIsDummy: true
-  messenger: "https://m.me/RCRallyHub"
-  mapEmbedUrl: "https://www.google.com/maps?q=%2337+Seminary+Drive%2C+Pala-o%2C+Iligan+City%2C+Philippines+9200&output=embed"
-  mapUrl: "https://www.google.com/maps/search/?api=1&query=%2337+Seminary+Drive%2C+Pala-o%2C+Iligan+City%2C+Philippines+9200"
+  mobile: '09674409537'
+  mobileIsDummy: false
+  email: ronnelbarreto@gmail.com
+  emailIsDummy: false
+  facebook: facebook.com/RCRallyHub
+  facebookIsDummy: false
+  messenger: https://m.me/RCRallyHub
+  mapEmbedUrl: https://www.google.com/maps?q=%2337+Seminary+Drive%2C+Pala-o%2C+Iligan+City%2C+Philippines+9200&output=embed
+  mapUrl: https://maps.app.goo.gl/9ebb2U7yngQS1Z8a7?g_st=ic
 social:
-  facebook: "https://facebook.com/RCRallyHub"
-  instagram: ""
-  tiktok: ""
-  youtube: ""
+  facebook: https://facebook.com/RCRallyHub
+  instagram: ''
+  tiktok: ''
+  youtube: ''
 announcementBar:
   enabled: true
-  message: "🏓 Now open at our new covered court in Pala-o, Iligan City — book your rally today!"
-  link: "/book"
-bookingButtonText: "Book a Court"
-# Every "Book Now" button/link on this site opens this URL (the separately
-# deployed booking system). Replace this with the real URL once it's
-# deployed — e.g. https://rc-rally-hub-booking.netlify.app/book — or edit it
-# right here in the CMS under Settings -> Booking System URL.
-bookingUrl: "http://localhost:3000/book"
+  message: 🏓 Now open at our new covered court in Pala-o, Iligan City — book your rally today!
+  link: /book
+bookingButtonText: Book a Court
+bookingUrl: https://rcrallyhub.togglebook.com
 footer:
-  description: "RC Rally Hub is Iligan City's premier pickleball destination — a covered court for casual games, training, tournaments, and community events, located inside Garahe by Chef Rods Restaurant."
-  copyrightName: "RC Rally Hub by Garahe"
+  description: RC Rally Hub is Iligan City's premier pickleball destination — a covered court for casual games, training, tournaments, and community events, located inside Garahe by Chef Rods Restaurant.
+  copyrightName: RC Rally Hub by Garahe
 defaultSeo:
-  seoTitle: "RC Rally Hub by Garahe | Pickleball Court Rental in Iligan City"
-  metaDescription: "Reserve a covered pickleball court in Pala-o, Iligan City. RC Rally Hub by Garahe offers open play, training, tournaments, and private events daily from 6 AM to 3 AM."
-  ogImage: "/images/og-default.jpg"
+  seoTitle: RC Rally Hub by Garahe | Pickleball Court Rental in Iligan City
+  metaDescription: Reserve a covered pickleball court in Pala-o, Iligan City. RC Rally Hub by Garahe offers open play, training, tournaments, and private events operating 24/7.
+  ogImage: /images/og-default.jpg
