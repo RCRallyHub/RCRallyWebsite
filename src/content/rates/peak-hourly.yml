@@ -1,13 +1,13 @@
-name: "Peak-Hour Court Rental"
-description: "Our most in-demand slots — evenings and weekends when the energy (and the community) is at its highest."
-price: "Starting at ₱350 per hour"
-billingUnit: "per hour"
-peakOrOffPeak: "peak"
-category: "court-rental"
+name: Peak-Hour Court Rental
+description: Our most in-demand slots — evenings and weekends when the energy (and the community) is at its highest.
+price: Starting at ₱450 per hour
+billingUnit: per hour
+peakOrOffPeak: peak
+category: court-rental
 features:
-  - "Full access to the covered court"
-  - "Evenings, weekends, and holiday prime time"
-  - "Book early — peak slots fill up fast"
+  - Full access to the covered court
+  - Evenings, weekends, and holiday prime time
+  - Book early — peak slots fill up fast
 isPlaceholderPrice: true
 displayOrder: 2
 featured: true
