@@ -1,13 +1,13 @@
-name: "Off-Peak Court Rental"
-description: "Great value for morning and early-afternoon games. Perfect for casual play, practice, or a relaxed session with friends."
-price: "Starting at ₱250 per hour"
-billingUnit: "per hour"
-peakOrOffPeak: "off-peak"
-category: "court-rental"
+name: Off-Peak Court Rental
+description: Great value for morning and early-afternoon games. Perfect for casual play, practice, or a relaxed session with friends.
+price: Starting at ₱350 per hour
+billingUnit: per hour
+peakOrOffPeak: off-peak
+category: court-rental
 features:
-  - "Full access to the covered court"
-  - "Ideal for weekday mornings and early afternoons"
-  - "Great for practice sessions and casual games"
+  - Full access to the covered court
+  - Ideal for weekday mornings and early afternoons
+  - Great for practice sessions and casual games
 isPlaceholderPrice: true
 displayOrder: 1
 featured: true
