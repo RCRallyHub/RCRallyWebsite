@@ -14,9 +14,25 @@ ogImage: /images/people/couple-players-1200.webp
 
 ## Our Story
 
-RC Rally Hub by Garahe started with a simple observation: pickleball was growing fast in the Philippines, but Iligan City didn't yet have a dedicated, well-maintained venue for it. The name "RC" carries the spirit of the founders' vision — a _Rally Court_ built for real community, and "Rally Hub" captures exactly what we wanted to build: not just a court, but a hub where every kind of player, from total beginners to competitive club members, could gather.
+It started with a simple love for the game. 🏓
 
-We built RC Rally Hub inside the grounds of Garahe by Chef Rods Restaurant in Pala-o, Iligan City — pairing a proper covered, lined pickleball court with the convenience of food, seating, and a welcoming atmosphere right next door. _(Details of the founding story are placeholders — replace with your official brand history in Sveltia CMS.)_
+RC Rally Hub began with the owners’ personal interest in playing pickleball with friends. What started as casual games, fun rallies, and quality time together slowly grew into a bigger idea — why not share this sport with more people?
+
+With that simple thought, RC Rally Hub was born.
+
+The owners decided to create a covered pickleball court where friends, families, beginners, and fellow sports enthusiasts could come together, play, learn, and enjoy the game regardless of the weather.
+
+But RC Rally Hub is more than just a court.
+
+It is a place where new friendships are made, skills are developed, healthy competition is enjoyed, and every rally becomes a memory. Whether you're picking up a paddle for the first time or already chasing your next win, everyone is welcome.
+
+As the community continues to grow, so does our dream — to build a space where people can rally, connect, and belong.
+
+From a simple interest shared among friends, RC Rally Hub is becoming a home for the growing pickleball community.
+
+Come for the game. Stay for the community.
+
+Let’s rally together. 💜💚🏓
 
 ## Our Mission
 
