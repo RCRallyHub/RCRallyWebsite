@@ -36,11 +36,11 @@ Let’s rally together. 💜💚🏓
 
 ## Our Mission
 
-To make pickleball accessible, exciting, and welcoming for every resident of Iligan City — from first-time players picking up a paddle for the first time, to competitive athletes training for their next tournament.
+RC Rally Hub is committed to providing a safe, accessible, and enjoyable space for everyone to experience and grow in the sport of pickleball. We aim to promote an active lifestyle, encourage sportsmanship and healthy competition, and build a strong community through every game and every rally.
 
 ## Our Vision
 
-To become Mindanao's most active and beloved pickleball community hub — a place where friendships are made, skills are sharpened, and every visit feels like a celebration of the sport.
+To become a welcoming and thriving hub for pickleball and active living, where people come together to play, connect, grow, and build lasting friendships.
 
 ## Community Values
 
