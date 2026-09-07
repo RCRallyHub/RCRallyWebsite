@@ -1,21 +1,22 @@
 ---
-title: "About Us"
-heading: "MORE THAN A COURT"
-subheading: "The story behind RC Rally Hub by Garahe"
-description: "RC Rally Hub was built for one reason: to give Iligan City a place to rally, play, and connect."
-heroImage: "/images/people/couple-players.webp"
-heroImageAlt: "A couple posing courtside with their paddles after a match at RC Rally Hub"
+title: About Us
+heading: MORE THAN A COURT
+subheading: The story behind RC Rally Hub by Garahe
+description: 'RC Rally Hub was built for one reason: to give Iligan City a place to rally, play, and connect.'
+heroImage: /images/people/couple-players.webp
+heroImageAlt: A couple posing courtside with their paddles after a match at RC Rally Hub
+ctas: []
 published: true
-seoTitle: "About RC Rally Hub | Pickleball Venue in Iligan City"
-metaDescription: "Learn the story behind RC Rally Hub by Garahe — our mission, values, and the team building Iligan City's pickleball community, located inside Garahe by Chef Rods Restaurant."
-ogImage: "/images/people/couple-players-1200.webp"
+seoTitle: About RC Rally Hub | Pickleball Venue in Iligan City
+metaDescription: Learn the story behind RC Rally Hub by Garahe — our mission, values, and the team building Iligan City's pickleball community, located inside Garahe by Chef Rods Restaurant.
+ogImage: /images/people/couple-players-1200.webp
 ---
 
-## Our Brand Story
+## Our Story
 
-RC Rally Hub by Garahe started with a simple observation: pickleball was growing fast in the Philippines, but Iligan City didn't yet have a dedicated, well-maintained venue for it. The name "RC" carries the spirit of the founders' vision — a *Rally Court* built for real community, and "Rally Hub" captures exactly what we wanted to build: not just a court, but a hub where every kind of player, from total beginners to competitive club members, could gather.
+RC Rally Hub by Garahe started with a simple observation: pickleball was growing fast in the Philippines, but Iligan City didn't yet have a dedicated, well-maintained venue for it. The name "RC" carries the spirit of the founders' vision — a _Rally Court_ built for real community, and "Rally Hub" captures exactly what we wanted to build: not just a court, but a hub where every kind of player, from total beginners to competitive club members, could gather.
 
-We built RC Rally Hub inside the grounds of Garahe by Chef Rods Restaurant in Pala-o, Iligan City — pairing a proper covered, lined pickleball court with the convenience of food, seating, and a welcoming atmosphere right next door. *(Details of the founding story are placeholders — replace with your official brand history in Sveltia CMS.)*
+We built RC Rally Hub inside the grounds of Garahe by Chef Rods Restaurant in Pala-o, Iligan City — pairing a proper covered, lined pickleball court with the convenience of food, seating, and a welcoming atmosphere right next door. _(Details of the founding story are placeholders — replace with your official brand history in Sveltia CMS.)_
 
 ## Our Mission
 
@@ -31,7 +32,7 @@ We believe pickleball is at its best when it's inclusive, energetic, and a littl
 
 ## What "RC Rally Hub by Garahe" Means
 
-**RC** stands for the founding vision of a dedicated *Rally Court* for Iligan City. **Rally Hub** is our promise: a central gathering point for every kind of player. **By Garahe** reflects our home — proudly located on the grounds of Garahe by Chef Rods Restaurant, blending great food with great games. *(Editable — update with the confirmed meaning behind the name.)*
+**RC** stands for the founding vision of a dedicated _Rally Court_ for Iligan City. **Rally Hub** is our promise: a central gathering point for every kind of player. **By Garahe** reflects our home — proudly located on the grounds of Garahe by Chef Rods Restaurant, blending great food with great games. _(Editable — update with the confirmed meaning behind the name.)_
 
 ## Our Venue
 
