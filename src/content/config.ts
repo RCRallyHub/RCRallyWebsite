@@ -15,6 +15,17 @@ const cta = z.object({
   style: z.enum(['primary', 'secondary', 'ghost']).default('primary'),
 });
 
+// Sveltia CMS's YAML writer round-trips a plain "YYYY-MM-DD" scalar
+// inconsistently: sometimes quoted (stays a string), sometimes not (js-yaml
+// then parses it back as a native Date). An unquoted save previously broke
+// the Netlify build outright (InvalidContentEntryDataError), which silently
+// blocked every later deploy -- including new gallery photos -- until the
+// offending file was hand-fixed. Accept either shape and coerce to a plain
+// "YYYY-MM-DD" string so a CMS save can never break the build this way again.
+const dateString = z
+  .union([z.string(), z.date()])
+  .transform((val) => (val instanceof Date ? val.toISOString().slice(0, 10) : val));
+
 // ---------------------------------------------------------------------------
 // Global business settings (single file collection)
 // ---------------------------------------------------------------------------
@@ -114,10 +125,10 @@ const events = defineCollection({
     image: z.string(),
     imageAlt: z.string().optional(),
     excerpt: z.string(),
-    date: z.string(), // ISO date
+    date: dateString, // ISO date
     startTime: z.string(), // "17:00"
     endTime: z.string(), // "20:00"
-    registrationDeadline: z.string().optional(),
+    registrationDeadline: dateString.optional(),
     category: z.enum([
       "Men's Doubles", "Women's Doubles", "Mixed Doubles", 'Beginner Division',
       'Intermediate Division', 'Open Division', 'All-Male Open Play', 'Clinic', 'Open Play', 'Community',
@@ -151,7 +162,7 @@ const gallery = defineCollection({
       'Court', 'Casual Games', "Men's Doubles", "Women's Doubles", 'Mixed Doubles',
       'Open Play', 'Tournaments', 'Families', 'Community', 'Awarding', 'Private Events',
     ]),
-    date: z.string().optional(),
+    date: dateString.optional(),
     displayOrder: z.number().default(0),
     featured: z.boolean().default(false),
     published: z.boolean().default(true),
@@ -171,7 +182,7 @@ const videos = defineCollection({
     posterImage: z.string(),
     posterImageAlt: z.string().optional(),
     category: z.string().default('Highlights'),
-    date: z.string().optional(),
+    date: dateString.optional(),
     displayOrder: z.number().default(0),
     featured: z.boolean().default(false),
     published: z.boolean().default(true),
@@ -312,7 +323,7 @@ const policies = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    lastUpdated: z.string().optional(),
+    lastUpdated: dateString.optional(),
     published: z.boolean().default(true),
   }),
 });
