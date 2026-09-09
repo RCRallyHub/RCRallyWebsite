@@ -51,7 +51,7 @@
     # update BOTH that CMS field and this origin to match, or the live-pricing
     # fetch will be silently blocked by the browser (it fails closed, so the
     # page still renders fine with static placeholder content either way).
-    Content-Security-Policy = "default-src 'self'; img-src 'self' data: https:; media-src 'self' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://unpkg.com; frame-src https://www.facebook.com https://www.google.com; connect-src 'self' https://your-booking-system.example.com https://api.github.com https://github.com https://api.netlify.com https://objects.githubusercontent.com; base-uri 'self'; form-action 'self';"
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://unpkg.com; frame-src https://www.facebook.com https://www.google.com; connect-src 'self' https://your-booking-system.example.com https://api.github.com https://github.com https://api.netlify.com https://objects.githubusercontent.com; base-uri 'self'; form-action 'self';"
 
 # Admin should never be indexed and should always fetch fresh (CMS + config).
 [[headers]]
