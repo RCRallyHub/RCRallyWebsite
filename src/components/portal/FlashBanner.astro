@@ -1,0 +1,18 @@
+---
+interface Props {
+  success?: string | null;
+  error?: string | null;
+}
+
+const { success, error } = Astro.props;
+---
+{success && (
+  <div class="portal-flash is-success" role="status">
+    {success === '1' ? 'Saved.' : success}
+  </div>
+)}
+{error && (
+  <div class="portal-flash is-error" role="alert">
+    {error === '1' ? 'Something went wrong — please try again.' : error}
+  </div>
+)}

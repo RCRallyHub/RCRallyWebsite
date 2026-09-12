@@ -1,0 +1,98 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../../layouts/PortalLayout.astro';
+import { getDb } from '../../../lib/db';
+import { invalidateCache } from '../../../lib/content/cache';
+
+const db = getDb();
+
+let redirectTarget: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  try {
+    if (action === 'move-page') {
+      const id = Number(form.get('id'));
+      const direction = String(form.get('direction'));
+      const pageRows = (await db.execute('SELECT id, sort_order FROM pages ORDER BY sort_order, id')).rows;
+      const idx = pageRows.findIndex((r) => Number(r.id) === id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx !== -1 && swapIdx >= 0 && swapIdx < pageRows.length) {
+        const a = pageRows[idx];
+        const b = pageRows[swapIdx];
+        await db.execute({ sql: 'UPDATE pages SET sort_order = ? WHERE id = ?', args: [b.sort_order, a.id] });
+        await db.execute({ sql: 'UPDATE pages SET sort_order = ? WHERE id = ?', args: [a.sort_order, b.id] });
+        invalidateCache('pages');
+      }
+      redirectTarget = '/portal/pages?saved=1';
+    } else {
+      throw new Error('Unknown action.');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    redirectTarget = `/portal/pages?error=${encodeURIComponent(message)}`;
+  }
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
+}
+
+const pages = (
+  await db.execute(`
+    SELECT p.*, (SELECT COUNT(*) FROM page_ctas c WHERE c.page_id = p.id) AS cta_count
+    FROM pages p
+    ORDER BY p.sort_order, p.id
+  `)
+).rows;
+---
+<PortalLayout title="Pages" active="pages">
+  <div class="portal-card">
+    <h2>Pages</h2>
+    <p class="portal-card-hint">
+      These are the site's fixed pages (looked up by slug from the code), so there's no add/delete here — open a page to
+      edit its copy, hero image, SEO tags, and call-to-action buttons.
+    </p>
+    <p class="portal-card-hint">
+      <strong>Note:</strong> the Home and About pages also have a few repeatable card sections (Home's highlights, "why
+      choose us", stats, booking steps; About's values, team, partners) that aren't editable here yet — that's a
+      planned follow-up screen.
+    </p>
+
+    <div class="portal-list">
+      {pages.map((p, i) => (
+        <div class:list={['portal-list-row', { 'is-disabled': !p.published }]}>
+          <div class="portal-order-btns">
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-page" />
+              <input type="hidden" name="id" value={String(p.id)} />
+              <input type="hidden" name="direction" value="up" />
+              <button type="submit" disabled={i === 0} aria-label="Move up">▲</button>
+            </form>
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-page" />
+              <input type="hidden" name="id" value={String(p.id)} />
+              <input type="hidden" name="direction" value="down" />
+              <button type="submit" disabled={i === pages.length - 1} aria-label="Move down">▼</button>
+            </form>
+          </div>
+
+          <div class="portal-list-body">
+            <div class="portal-list-title">{String(p.title)}</div>
+            <div class="portal-list-meta">
+              /{String(p.slug)} · {Number(p.cta_count)} CTA{Number(p.cta_count) === 1 ? '' : 's'}
+              {!p.published && ' · hidden'}
+            </div>
+          </div>
+
+          <div class="portal-list-controls">
+            <a class="portal-btn-ghost portal-btn-sm" href={`/portal/pages/${p.slug}`}>Manage</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</PortalLayout>

@@ -1,0 +1,149 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../../layouts/PortalLayout.astro';
+import { getDb } from '../../../lib/db';
+import { invalidateCache } from '../../../lib/content/cache';
+
+const db = getDb();
+
+function str(form: FormData, key: string): string | null {
+  const v = form.get(key);
+  const s = typeof v === 'string' ? v.trim() : '';
+  return s ? s : null;
+}
+
+let redirectTarget: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  try {
+    if (action === 'add-section') {
+      const title = str(form, 'title');
+      if (!title) throw new Error('Title is required.');
+      const maxRow = (await db.execute('SELECT COALESCE(MAX(sort_order), -1) AS m FROM gallery_sections')).rows[0];
+      const nextOrder = Number(maxRow?.m ?? -1) + 1;
+      await db.execute({
+        sql: 'INSERT INTO gallery_sections (title, description, sort_order, enabled) VALUES (?, ?, ?, 1)',
+        args: [title, str(form, 'description'), nextOrder],
+      });
+      invalidateCache('gallery');
+      redirectTarget = '/portal/gallery?saved=1';
+    } else if (action === 'delete-section') {
+      const id = Number(form.get('id'));
+      const countRow = (
+        await db.execute({ sql: 'SELECT COUNT(*) AS n FROM gallery_images WHERE section_id = ?', args: [id] })
+      ).rows[0];
+      if (Number(countRow?.n ?? 0) > 0) {
+        throw new Error('This section still has images in it — move or delete them first.');
+      }
+      await db.execute({ sql: 'DELETE FROM gallery_sections WHERE id = ?', args: [id] });
+      invalidateCache('gallery');
+      redirectTarget = '/portal/gallery?saved=1';
+    } else if (action === 'move-section') {
+      const id = Number(form.get('id'));
+      const direction = String(form.get('direction'));
+      const sections = (await db.execute('SELECT id, sort_order FROM gallery_sections ORDER BY sort_order, id')).rows;
+      const idx = sections.findIndex((s) => Number(s.id) === id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx !== -1 && swapIdx >= 0 && swapIdx < sections.length) {
+        const a = sections[idx];
+        const b = sections[swapIdx];
+        await db.execute({ sql: 'UPDATE gallery_sections SET sort_order = ? WHERE id = ?', args: [b.sort_order, a.id] });
+        await db.execute({ sql: 'UPDATE gallery_sections SET sort_order = ? WHERE id = ?', args: [a.sort_order, b.id] });
+        invalidateCache('gallery');
+      }
+      redirectTarget = '/portal/gallery?saved=1';
+    } else {
+      throw new Error('Unknown action.');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    redirectTarget = `/portal/gallery?error=${encodeURIComponent(message)}`;
+  }
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
+}
+
+const sections = (
+  await db.execute(`
+    SELECT gs.*, (SELECT COUNT(*) FROM gallery_images gi WHERE gi.section_id = gs.id) AS image_count
+    FROM gallery_sections gs
+    ORDER BY gs.sort_order, gs.id
+  `)
+).rows;
+---
+<PortalLayout title="Gallery" active="gallery">
+  <div class="portal-card">
+    <h2>Sections</h2>
+    <p class="portal-card-hint">Group photos into sections (Court, Mixed Doubles, Community, etc.). Open a section to manage its photos.</p>
+
+    <div class="portal-list">
+      {sections.map((s, i) => (
+        <div class:list={['portal-list-row', { 'is-disabled': !s.enabled }]}>
+          <div class="portal-order-btns">
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-section" />
+              <input type="hidden" name="id" value={String(s.id)} />
+              <input type="hidden" name="direction" value="up" />
+              <button type="submit" disabled={i === 0} aria-label="Move up">▲</button>
+            </form>
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-section" />
+              <input type="hidden" name="id" value={String(s.id)} />
+              <input type="hidden" name="direction" value="down" />
+              <button type="submit" disabled={i === sections.length - 1} aria-label="Move down">▼</button>
+            </form>
+          </div>
+
+          <div class="portal-list-body">
+            <div class="portal-list-title">{String(s.title)}</div>
+            <div class="portal-list-meta">
+              {Number(s.image_count)} photo{Number(s.image_count) === 1 ? '' : 's'}
+              {!s.enabled && ' · hidden'}
+            </div>
+          </div>
+
+          <div class="portal-list-controls">
+            <a class="portal-btn-ghost portal-btn-sm" href={`/portal/gallery/${s.id}`}>Manage</a>
+            <form
+              method="POST"
+              class="portal-inline-form"
+              onsubmit="return confirm('Delete this empty section?')"
+            >
+              <input type="hidden" name="action" value="delete-section" />
+              <input type="hidden" name="id" value={String(s.id)} />
+              <button type="submit" class="portal-btn-ghost portal-btn-sm portal-btn-danger" disabled={Number(s.image_count) > 0}>
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="portal-card">
+    <h2>Add a Section</h2>
+    <form method="POST">
+      <input type="hidden" name="action" value="add-section" />
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" required />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="description">Description (optional)</label>
+          <input id="description" name="description" type="text" />
+        </div>
+      </div>
+      <div class="portal-actions">
+        <button type="submit" class="portal-btn">Add Section</button>
+      </div>
+    </form>
+  </div>
+</PortalLayout>

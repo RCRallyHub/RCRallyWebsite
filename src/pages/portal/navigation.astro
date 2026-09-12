@@ -1,0 +1,241 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { getDb } from '../../lib/db';
+import { invalidateCache } from '../../lib/content/cache';
+
+const db = getDb();
+
+function str(form: FormData, key: string): string | null {
+  const v = form.get(key);
+  const s = typeof v === 'string' ? v.trim() : '';
+  return s ? s : null;
+}
+
+let redirectTarget: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  try {
+    if (action === 'add-item') {
+      const label = str(form, 'label');
+      const href = str(form, 'href');
+      const location = str(form, 'location') === 'footer' ? 'footer' : 'header';
+      const groupLabel = location === 'footer' ? str(form, 'group_label') : null;
+      if (!label || !href) throw new Error('Label and link are required.');
+      if (location === 'footer' && !groupLabel) throw new Error('Footer items need a column name.');
+
+      const maxRow = (
+        await db.execute({
+          sql: 'SELECT COALESCE(MAX(sort_order), -1) AS m FROM navigation_items WHERE location = ? AND group_label IS ?',
+          args: [location, groupLabel],
+        })
+      ).rows[0];
+      const nextOrder = Number(maxRow?.m ?? -1) + 1;
+
+      await db.execute({
+        sql: 'INSERT INTO navigation_items (label, href, location, group_label, sort_order) VALUES (?, ?, ?, ?, ?)',
+        args: [label, href, location, groupLabel, nextOrder],
+      });
+      invalidateCache('navigation');
+      redirectTarget = '/portal/navigation?saved=1';
+    } else if (action === 'edit-item') {
+      const id = Number(form.get('id'));
+      const label = str(form, 'label');
+      const href = str(form, 'href');
+      if (!label || !href) throw new Error('Label and link are required.');
+
+      const existing = (await db.execute({ sql: 'SELECT location FROM navigation_items WHERE id = ?', args: [id] })).rows[0];
+      const groupLabel = existing?.location === 'footer' ? str(form, 'group_label') : null;
+      if (existing?.location === 'footer' && !groupLabel) throw new Error('Footer items need a column name.');
+
+      await db.execute({
+        sql: 'UPDATE navigation_items SET label = ?, href = ?, group_label = ?, enabled = ?, updated_at = unixepoch() WHERE id = ?',
+        args: [label, href, groupLabel, form.has('enabled') ? 1 : 0, id],
+      });
+      invalidateCache('navigation');
+      redirectTarget = '/portal/navigation?saved=1';
+    } else if (action === 'delete-item') {
+      const id = Number(form.get('id'));
+      await db.execute({ sql: 'DELETE FROM navigation_items WHERE id = ?', args: [id] });
+      invalidateCache('navigation');
+      redirectTarget = '/portal/navigation?saved=1';
+    } else if (action === 'move-item') {
+      const id = Number(form.get('id'));
+      const direction = String(form.get('direction'));
+      const item = (await db.execute({ sql: 'SELECT * FROM navigation_items WHERE id = ?', args: [id] })).rows[0];
+      if (item) {
+        const siblings = (
+          await db.execute({
+            sql: 'SELECT id, sort_order FROM navigation_items WHERE location = ? AND group_label IS ? ORDER BY sort_order, id',
+            args: [item.location, item.group_label ?? null],
+          })
+        ).rows;
+        const idx = siblings.findIndex((r) => Number(r.id) === id);
+        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (idx !== -1 && swapIdx >= 0 && swapIdx < siblings.length) {
+          const a = siblings[idx];
+          const b = siblings[swapIdx];
+          await db.execute({ sql: 'UPDATE navigation_items SET sort_order = ? WHERE id = ?', args: [b.sort_order, a.id] });
+          await db.execute({ sql: 'UPDATE navigation_items SET sort_order = ? WHERE id = ?', args: [a.sort_order, b.id] });
+          invalidateCache('navigation');
+        }
+      }
+      redirectTarget = '/portal/navigation?saved=1';
+    } else {
+      throw new Error('Unknown action.');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    redirectTarget = `/portal/navigation?error=${encodeURIComponent(message)}`;
+  }
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
+}
+
+const allItems = (
+  await db.execute('SELECT * FROM navigation_items ORDER BY location, group_label, sort_order, id')
+).rows;
+
+const headerItems = allItems.filter((r) => r.location === 'header');
+const footerItems = allItems.filter((r) => r.location === 'footer');
+
+const footerGroupOrder: string[] = [];
+const footerByGroup = new Map<string, typeof footerItems>();
+for (const item of footerItems) {
+  const group = item.group_label ? String(item.group_label) : '(no column)';
+  if (!footerByGroup.has(group)) {
+    footerByGroup.set(group, []);
+    footerGroupOrder.push(group);
+  }
+  footerByGroup.get(group)!.push(item);
+}
+---
+<PortalLayout title="Navigation" active="navigation">
+  <div class="portal-card">
+    <h2>Header Menu</h2>
+    <div class="portal-list">
+      {headerItems.map((item, i) => (
+        <div class:list={['portal-list-row', { 'is-disabled': !item.enabled }]}>
+          <div class="portal-order-btns">
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-item" />
+              <input type="hidden" name="id" value={String(item.id)} />
+              <input type="hidden" name="direction" value="up" />
+              <button type="submit" disabled={i === 0} aria-label="Move up">▲</button>
+            </form>
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-item" />
+              <input type="hidden" name="id" value={String(item.id)} />
+              <input type="hidden" name="direction" value="down" />
+              <button type="submit" disabled={i === headerItems.length - 1} aria-label="Move down">▼</button>
+            </form>
+          </div>
+          <form method="POST" class="portal-list-body" style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
+            <input type="hidden" name="action" value="edit-item" />
+            <input type="hidden" name="id" value={String(item.id)} />
+            <input name="label" type="text" required value={String(item.label)} placeholder="Label" style="flex: 1; min-width: 120px;" />
+            <input name="href" type="text" required value={String(item.href)} placeholder="/link" style="flex: 1; min-width: 140px;" />
+            <label class="portal-checkbox">
+              <input type="checkbox" name="enabled" checked={!!item.enabled} />
+              Visible
+            </label>
+            <button type="submit" class="portal-btn portal-btn-sm">Save</button>
+          </form>
+          <form method="POST" class="portal-inline-form" onsubmit="return confirm('Delete this menu item?')">
+            <input type="hidden" name="action" value="delete-item" />
+            <input type="hidden" name="id" value={String(item.id)} />
+            <button type="submit" class="portal-btn-ghost portal-btn-sm portal-btn-danger">Delete</button>
+          </form>
+        </div>
+      ))}
+      {headerItems.length === 0 && <p class="portal-card-hint">No header links yet.</p>}
+    </div>
+
+    <form method="POST" style="margin-top: 16px; display:flex; gap:10px; align-items:flex-end; flex-wrap: wrap;">
+      <input type="hidden" name="action" value="add-item" />
+      <input type="hidden" name="location" value="header" />
+      <div class="portal-field">
+        <label>Label</label>
+        <input name="label" type="text" required />
+      </div>
+      <div class="portal-field">
+        <label>Link</label>
+        <input name="href" type="text" required placeholder="/rates" />
+      </div>
+      <button type="submit" class="portal-btn">Add Header Link</button>
+    </form>
+  </div>
+
+  <div class="portal-card">
+    <h2>Footer Menu</h2>
+    <p class="portal-card-hint">Grouped into columns. Adding a new column name creates that column.</p>
+
+    {footerGroupOrder.map((group) => (
+      <div style="margin-bottom: 22px;">
+        <p class="portal-section-title" style="font-size: 0.95rem; margin-bottom: 8px;">{group}</p>
+        <div class="portal-list">
+          {footerByGroup.get(group)!.map((item, i, arr) => (
+            <div class:list={['portal-list-row', { 'is-disabled': !item.enabled }]}>
+              <div class="portal-order-btns">
+                <form method="POST" class="portal-inline-form">
+                  <input type="hidden" name="action" value="move-item" />
+                  <input type="hidden" name="id" value={String(item.id)} />
+                  <input type="hidden" name="direction" value="up" />
+                  <button type="submit" disabled={i === 0} aria-label="Move up">▲</button>
+                </form>
+                <form method="POST" class="portal-inline-form">
+                  <input type="hidden" name="action" value="move-item" />
+                  <input type="hidden" name="id" value={String(item.id)} />
+                  <input type="hidden" name="direction" value="down" />
+                  <button type="submit" disabled={i === arr.length - 1} aria-label="Move down">▼</button>
+                </form>
+              </div>
+              <form method="POST" class="portal-list-body" style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
+                <input type="hidden" name="action" value="edit-item" />
+                <input type="hidden" name="id" value={String(item.id)} />
+                <input name="label" type="text" required value={String(item.label)} placeholder="Label" style="flex: 1; min-width: 120px;" />
+                <input name="href" type="text" required value={String(item.href)} placeholder="/link" style="flex: 1; min-width: 140px;" />
+                <input name="group_label" type="text" required value={String(item.group_label)} placeholder="Column" style="width: 140px;" />
+                <label class="portal-checkbox">
+                  <input type="checkbox" name="enabled" checked={!!item.enabled} />
+                  Visible
+                </label>
+                <button type="submit" class="portal-btn portal-btn-sm">Save</button>
+              </form>
+              <form method="POST" class="portal-inline-form" onsubmit="return confirm('Delete this menu item?')">
+                <input type="hidden" name="action" value="delete-item" />
+                <input type="hidden" name="id" value={String(item.id)} />
+                <button type="submit" class="portal-btn-ghost portal-btn-sm portal-btn-danger">Delete</button>
+              </form>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+    {footerGroupOrder.length === 0 && <p class="portal-card-hint">No footer links yet.</p>}
+
+    <form method="POST" style="margin-top: 16px; display:flex; gap:10px; align-items:flex-end; flex-wrap: wrap;">
+      <input type="hidden" name="action" value="add-item" />
+      <input type="hidden" name="location" value="footer" />
+      <div class="portal-field">
+        <label>Label</label>
+        <input name="label" type="text" required />
+      </div>
+      <div class="portal-field">
+        <label>Link</label>
+        <input name="href" type="text" required placeholder="/rates" />
+      </div>
+      <div class="portal-field">
+        <label>Column</label>
+        <input name="group_label" type="text" required placeholder="e.g. Explore" />
+      </div>
+      <button type="submit" class="portal-btn">Add Footer Link</button>
+    </form>
+  </div>
+</PortalLayout>

@@ -2,7 +2,7 @@
 import { getSettings } from '../lib/content/settings';
 const settings = await getSettings();
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
-const hideOn = ['/book', '/admin'];
+const hideOn = ['/book', '/portal'];
 const shouldRender = !hideOn.some((p) => currentPath.startsWith(p));
 ---
 {shouldRender && (

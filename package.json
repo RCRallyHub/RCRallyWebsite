@@ -2,7 +2,7 @@
   "name": "rc-rally-hub",
   "version": "1.0.0",
   "private": true,
-  "description": "RC Rally Hub by Garahe — official website (Astro + Tailwind + Sveltia CMS)",
+  "description": "RC Rally Hub by Garahe — official website (Astro SSR + Tailwind + Turso, custom admin portal)",
   "type": "module",
   "scripts": {
     "dev": "astro dev",

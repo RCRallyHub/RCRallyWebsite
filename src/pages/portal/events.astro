@@ -1,0 +1,59 @@
+---
+export const prerender = false;
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import SimpleCrudScreen from '../../components/portal/SimpleCrudScreen.astro';
+import { getDb } from '../../lib/db';
+import { listRows, handleSimpleCrudAction, type SimpleCrudConfig } from '../../lib/portal/simple-crud';
+
+const db = getDb();
+const BASE_PATH = '/portal/events';
+
+const config: SimpleCrudConfig = {
+  table: 'events',
+  // No manual ordering — the public site sorts events by event_date itself,
+  // so there's nothing sensible for up/down buttons to swap.
+  visibilityColumn: 'published',
+  previewField: 'image_url',
+  hasSlug: true,
+  slugSourceField: 'title',
+  cacheKey: 'events',
+  pageTitle: 'Events',
+  addLabel: 'Add an Event',
+  fields: [
+    { key: 'title', label: 'Title', type: 'text', required: true },
+    { key: 'image_url', label: 'Image', type: 'image', required: true },
+    { key: 'image_alt', label: 'Image alt text', type: 'text' },
+    { key: 'excerpt', label: 'Excerpt', type: 'textarea', required: true, wide: true },
+    { key: 'body', label: 'Full description (Markdown)', type: 'textarea', wide: true },
+    { key: 'event_date', label: 'Event date', type: 'text', required: true, placeholder: 'YYYY-MM-DD' },
+    { key: 'start_time', label: 'Start time', type: 'text', required: true, placeholder: 'HH:MM' },
+    { key: 'end_time', label: 'End time', type: 'text', required: true, placeholder: 'HH:MM' },
+    { key: 'registration_deadline', label: 'Registration deadline', type: 'text', placeholder: 'YYYY-MM-DD' },
+    { key: 'category', label: 'Category', type: 'text', required: true },
+    { key: 'skill_level', label: 'Skill level', type: 'text', required: true, defaultValue: 'All Levels' },
+    { key: 'fee', label: 'Fee', type: 'text', required: true },
+    { key: 'max_participants', label: 'Max participants', type: 'number' },
+    { key: 'available_slots', label: 'Available slots', type: 'number' },
+    { key: 'format', label: 'Format', type: 'text' },
+    { key: 'rules', label: 'Rules', type: 'textarea', wide: true },
+    { key: 'prizes', label: 'Prizes', type: 'textarea', wide: true },
+    { key: 'registration_link', label: 'Registration link', type: 'url' },
+    { key: 'status', label: 'Status', type: 'text', required: true, placeholder: 'e.g. Registration Open, Upcoming' },
+    { key: 'featured', label: 'Featured', type: 'checkbox' },
+    { key: 'published', label: 'Visible on site', type: 'checkbox', defaultValue: true },
+  ],
+};
+
+let redirectTarget: string | null = null;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = await handleSimpleCrudAction(db, config, form, BASE_PATH);
+  redirectTarget = result.redirect;
+}
+if (redirectTarget) return Astro.redirect(redirectTarget);
+
+const rows = await listRows(db, config);
+---
+<PortalLayout title="Events" active="events">
+  <SimpleCrudScreen config={config} rows={rows} />
+</PortalLayout>

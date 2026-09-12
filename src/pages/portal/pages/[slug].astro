@@ -1,0 +1,267 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../../layouts/PortalLayout.astro';
+import { getDb } from '../../../lib/db';
+import { invalidateCache } from '../../../lib/content/cache';
+import { resolveImageField } from '../../../lib/storage';
+
+const db = getDb();
+const slug = Astro.params.slug;
+
+function str(form: FormData, key: string): string | null {
+  const v = form.get(key);
+  const s = typeof v === 'string' ? v.trim() : '';
+  return s ? s : null;
+}
+
+if (!slug) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const pageRow = (await db.execute({ sql: 'SELECT * FROM pages WHERE slug = ?', args: [slug] })).rows[0];
+if (!pageRow) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+const pageId = Number(pageRow.id);
+
+let redirectTarget: string | null = null;
+const base = `/portal/pages/${slug}`;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  try {
+    if (action === 'edit-page') {
+      const title = str(form, 'title');
+      const heading = str(form, 'heading');
+      if (!title || !heading) throw new Error('Title and heading are required.');
+      const heroImageAlt = str(form, 'hero_image_alt');
+      const heroImageUrl = await resolveImageField(form, 'hero_image_url', { altText: heroImageAlt, title });
+      const ogImageUrl = await resolveImageField(form, 'og_image_url', { title });
+
+      await db.execute({
+        sql: `UPDATE pages SET
+                title = ?, heading = ?, subheading = ?, description = ?, hero_image_url = ?, hero_image_alt = ?,
+                body = ?, seo_title = ?, meta_description = ?, og_image_url = ?, published = ?, updated_at = unixepoch()
+              WHERE id = ?`,
+        args: [
+          title,
+          heading,
+          str(form, 'subheading'),
+          str(form, 'description'),
+          heroImageUrl,
+          heroImageAlt,
+          str(form, 'body'),
+          str(form, 'seo_title'),
+          str(form, 'meta_description'),
+          ogImageUrl,
+          form.has('published') ? 1 : 0,
+          pageId,
+        ],
+      });
+      invalidateCache('pages');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'add-cta') {
+      const label = str(form, 'label');
+      const href = str(form, 'href');
+      if (!label || !href) throw new Error('CTA label and link are required.');
+      const maxRow = (
+        await db.execute({ sql: 'SELECT COALESCE(MAX(sort_order), -1) AS m FROM page_ctas WHERE page_id = ?', args: [pageId] })
+      ).rows[0];
+      const nextOrder = Number(maxRow?.m ?? -1) + 1;
+      await db.execute({
+        sql: 'INSERT INTO page_ctas (page_id, label, href, style, sort_order) VALUES (?, ?, ?, ?, ?)',
+        args: [pageId, label, href, str(form, 'style') ?? 'primary', nextOrder],
+      });
+      invalidateCache('pages');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'edit-cta') {
+      const id = Number(form.get('id'));
+      const label = str(form, 'label');
+      const href = str(form, 'href');
+      if (!label || !href) throw new Error('CTA label and link are required.');
+      await db.execute({
+        sql: 'UPDATE page_ctas SET label = ?, href = ?, style = ? WHERE id = ? AND page_id = ?',
+        args: [label, href, str(form, 'style') ?? 'primary', id, pageId],
+      });
+      invalidateCache('pages');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'delete-cta') {
+      const id = Number(form.get('id'));
+      await db.execute({ sql: 'DELETE FROM page_ctas WHERE id = ? AND page_id = ?', args: [id, pageId] });
+      invalidateCache('pages');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'move-cta') {
+      const id = Number(form.get('id'));
+      const direction = String(form.get('direction'));
+      const ctas = (
+        await db.execute({ sql: 'SELECT id, sort_order FROM page_ctas WHERE page_id = ? ORDER BY sort_order, id', args: [pageId] })
+      ).rows;
+      const idx = ctas.findIndex((r) => Number(r.id) === id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx !== -1 && swapIdx >= 0 && swapIdx < ctas.length) {
+        const a = ctas[idx];
+        const b = ctas[swapIdx];
+        await db.execute({ sql: 'UPDATE page_ctas SET sort_order = ? WHERE id = ?', args: [b.sort_order, a.id] });
+        await db.execute({ sql: 'UPDATE page_ctas SET sort_order = ? WHERE id = ?', args: [a.sort_order, b.id] });
+        invalidateCache('pages');
+      }
+      redirectTarget = `${base}?saved=1`;
+    } else {
+      throw new Error('Unknown action.');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    redirectTarget = `${base}?error=${encodeURIComponent(message)}`;
+  }
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
+}
+
+// Re-fetch fresh (a POST above may have changed it, though we always redirect after a write).
+const page = (await db.execute({ sql: 'SELECT * FROM pages WHERE id = ?', args: [pageId] })).rows[0];
+const ctas = (
+  await db.execute({ sql: 'SELECT * FROM page_ctas WHERE page_id = ? ORDER BY sort_order, id', args: [pageId] })
+).rows;
+---
+<PortalLayout title={`Pages — ${String(page.title)}`} active="pages">
+  <p class="portal-breadcrumb"><a href="/portal/pages">← All Pages</a></p>
+
+  <div class="portal-card">
+    <h2>Page Content</h2>
+    <p class="portal-card-hint">Slug: <code>/{String(page.slug)}</code> (fixed).</p>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="edit-page" />
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" required value={String(page.title)} />
+        </div>
+        <div class="portal-field">
+          <label for="heading">Heading</label>
+          <input id="heading" name="heading" type="text" required value={String(page.heading)} />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="subheading">Subheading</label>
+          <input id="subheading" name="subheading" type="text" value={page.subheading ? String(page.subheading) : ''} />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="description">Description</label>
+          <textarea id="description" name="description">{page.description ? String(page.description) : ''}</textarea>
+        </div>
+        <div class="portal-field">
+          <label for="hero_image_url">Hero image (path/URL, or upload)</label>
+          <input id="hero_image_url" name="hero_image_url" type="text" value={page.hero_image_url ? String(page.hero_image_url) : ''} />
+          <input name="hero_image_url_upload" type="file" accept="image/*" style="font-size:0.76rem; margin-top:4px;" />
+        </div>
+        <div class="portal-field">
+          <label for="hero_image_alt">Hero image alt text</label>
+          <input id="hero_image_alt" name="hero_image_alt" type="text" value={page.hero_image_alt ? String(page.hero_image_alt) : ''} />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="body">Body (Markdown, optional)</label>
+          <textarea id="body" name="body" style="min-height: 160px;">{page.body ? String(page.body) : ''}</textarea>
+        </div>
+        <div class="portal-field">
+          <label>&nbsp;</label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="published" checked={!!page.published} />
+            Visible on site
+          </label>
+        </div>
+      </div>
+
+      <fieldset class="portal-fieldset" style="margin-top: 18px;">
+        <legend>SEO</legend>
+        <div class="portal-form-grid">
+          <div class="portal-field is-wide">
+            <label for="seo_title">SEO title</label>
+            <input id="seo_title" name="seo_title" type="text" value={page.seo_title ? String(page.seo_title) : ''} />
+          </div>
+          <div class="portal-field is-wide">
+            <label for="meta_description">Meta description</label>
+            <textarea id="meta_description" name="meta_description">{page.meta_description ? String(page.meta_description) : ''}</textarea>
+          </div>
+          <div class="portal-field is-wide">
+            <label for="og_image_url">OG image (path/URL, or upload)</label>
+            <input id="og_image_url" name="og_image_url" type="text" value={page.og_image_url ? String(page.og_image_url) : ''} />
+            <input name="og_image_url_upload" type="file" accept="image/*" style="font-size:0.76rem; margin-top:4px;" />
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="portal-actions">
+        <button type="submit" class="portal-btn">Save Page</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="portal-card">
+    <h2>Call-to-Action Buttons ({ctas.length})</h2>
+    <div class="portal-list">
+      {ctas.map((cta, i) => (
+        <div class="portal-list-row">
+          <div class="portal-order-btns">
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-cta" />
+              <input type="hidden" name="id" value={String(cta.id)} />
+              <input type="hidden" name="direction" value="up" />
+              <button type="submit" disabled={i === 0} aria-label="Move up">▲</button>
+            </form>
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-cta" />
+              <input type="hidden" name="id" value={String(cta.id)} />
+              <input type="hidden" name="direction" value="down" />
+              <button type="submit" disabled={i === ctas.length - 1} aria-label="Move down">▼</button>
+            </form>
+          </div>
+          <form method="POST" class="portal-list-body" style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
+            <input type="hidden" name="action" value="edit-cta" />
+            <input type="hidden" name="id" value={String(cta.id)} />
+            <input name="label" type="text" required value={String(cta.label)} placeholder="Label" style="flex: 1; min-width: 100px;" />
+            <input name="href" type="text" required value={String(cta.href)} placeholder="/link" style="flex: 1; min-width: 120px;" />
+            <select name="style" style="width: 120px;">
+              {['primary', 'secondary', 'ghost'].map((opt) => (
+                <option value={opt} selected={String(cta.style) === opt}>{opt}</option>
+              ))}
+            </select>
+            <button type="submit" class="portal-btn portal-btn-sm">Save</button>
+          </form>
+          <form method="POST" class="portal-inline-form" onsubmit="return confirm('Delete this button?')">
+            <input type="hidden" name="action" value="delete-cta" />
+            <input type="hidden" name="id" value={String(cta.id)} />
+            <button type="submit" class="portal-btn-ghost portal-btn-sm portal-btn-danger">Delete</button>
+          </form>
+        </div>
+      ))}
+      {ctas.length === 0 && <p class="portal-card-hint">No CTA buttons on this page.</p>}
+    </div>
+
+    <form method="POST" style="margin-top: 16px; display:flex; gap:10px; align-items:flex-end; flex-wrap: wrap;">
+      <input type="hidden" name="action" value="add-cta" />
+      <div class="portal-field">
+        <label>Label</label>
+        <input name="label" type="text" required />
+      </div>
+      <div class="portal-field">
+        <label>Link</label>
+        <input name="href" type="text" required />
+      </div>
+      <div class="portal-field">
+        <label>Style</label>
+        <select name="style">
+          <option value="primary">primary</option>
+          <option value="secondary">secondary</option>
+          <option value="ghost">ghost</option>
+        </select>
+      </div>
+      <button type="submit" class="portal-btn">Add Button</button>
+    </form>
+  </div>
+</PortalLayout>

@@ -1,0 +1,234 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../../layouts/PortalLayout.astro';
+import { getDb } from '../../../lib/db';
+import { invalidateCache } from '../../../lib/content/cache';
+
+const db = getDb();
+const rateId = Number(Astro.params.id);
+
+function str(form: FormData, key: string): string | null {
+  const v = form.get(key);
+  const s = typeof v === 'string' ? v.trim() : '';
+  return s ? s : null;
+}
+
+if (!Number.isFinite(rateId)) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+let redirectTarget: string | null = null;
+const base = `/portal/rates/${rateId}`;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  try {
+    if (action === 'edit-rate') {
+      const name = str(form, 'name');
+      const price = str(form, 'price');
+      const category = str(form, 'category');
+      if (!name || !price || !category) throw new Error('Name, price, and category are required.');
+
+      await db.execute({
+        sql: `UPDATE rates SET
+                name = ?, description = ?, price = ?, billing_unit = ?, peak_or_off_peak = ?,
+                category = ?, is_placeholder_price = ?, featured = ?, published = ?, updated_at = unixepoch()
+              WHERE id = ?`,
+        args: [
+          name,
+          str(form, 'description') ?? '',
+          price,
+          str(form, 'billing_unit') ?? 'per hour',
+          str(form, 'peak_or_off_peak') ?? 'n/a',
+          category,
+          form.has('is_placeholder_price') ? 1 : 0,
+          form.has('featured') ? 1 : 0,
+          form.has('published') ? 1 : 0,
+          rateId,
+        ],
+      });
+      invalidateCache('rates');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'add-feature') {
+      const feature = str(form, 'feature');
+      if (!feature) throw new Error('Feature text is required.');
+      const maxRow = (
+        await db.execute({ sql: 'SELECT COALESCE(MAX(sort_order), -1) AS m FROM rate_features WHERE rate_id = ?', args: [rateId] })
+      ).rows[0];
+      const nextOrder = Number(maxRow?.m ?? -1) + 1;
+      await db.execute({
+        sql: 'INSERT INTO rate_features (rate_id, feature, sort_order) VALUES (?, ?, ?)',
+        args: [rateId, feature, nextOrder],
+      });
+      invalidateCache('rates');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'edit-feature') {
+      const id = Number(form.get('id'));
+      const feature = str(form, 'feature');
+      if (!feature) throw new Error('Feature text is required.');
+      await db.execute({ sql: 'UPDATE rate_features SET feature = ? WHERE id = ? AND rate_id = ?', args: [feature, id, rateId] });
+      invalidateCache('rates');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'delete-feature') {
+      const id = Number(form.get('id'));
+      await db.execute({ sql: 'DELETE FROM rate_features WHERE id = ? AND rate_id = ?', args: [id, rateId] });
+      invalidateCache('rates');
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'move-feature') {
+      const id = Number(form.get('id'));
+      const direction = String(form.get('direction'));
+      const features = (
+        await db.execute({ sql: 'SELECT id, sort_order FROM rate_features WHERE rate_id = ? ORDER BY sort_order, id', args: [rateId] })
+      ).rows;
+      const idx = features.findIndex((r) => Number(r.id) === id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx !== -1 && swapIdx >= 0 && swapIdx < features.length) {
+        const a = features[idx];
+        const b = features[swapIdx];
+        await db.execute({ sql: 'UPDATE rate_features SET sort_order = ? WHERE id = ?', args: [b.sort_order, a.id] });
+        await db.execute({ sql: 'UPDATE rate_features SET sort_order = ? WHERE id = ?', args: [a.sort_order, b.id] });
+        invalidateCache('rates');
+      }
+      redirectTarget = `${base}?saved=1`;
+    } else if (action === 'delete-rate') {
+      await db.execute({ sql: 'DELETE FROM rates WHERE id = ?', args: [rateId] });
+      invalidateCache('rates');
+      redirectTarget = '/portal/rates?saved=1';
+    } else {
+      throw new Error('Unknown action.');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    redirectTarget = `${base}?error=${encodeURIComponent(message)}`;
+  }
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
+}
+
+const rate = (await db.execute({ sql: 'SELECT * FROM rates WHERE id = ?', args: [rateId] })).rows[0];
+if (!rate) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const features = (
+  await db.execute({ sql: 'SELECT * FROM rate_features WHERE rate_id = ? ORDER BY sort_order, id', args: [rateId] })
+).rows;
+---
+<PortalLayout title={`Rates — ${String(rate.name)}`} active="rates">
+  <p class="portal-breadcrumb"><a href="/portal/rates">← All Rate Plans</a></p>
+
+  <div class="portal-card">
+    <h2>Plan Details</h2>
+    <p class="portal-card-hint">
+      Slug: <code>{String(rate.slug)}</code> (fixed — the public Rates page may refer to specific plans by this slug).
+    </p>
+    <form method="POST">
+      <input type="hidden" name="action" value="edit-rate" />
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label for="name">Name</label>
+          <input id="name" name="name" type="text" required value={String(rate.name)} />
+        </div>
+        <div class="portal-field">
+          <label for="price">Price</label>
+          <input id="price" name="price" type="text" required value={String(rate.price)} />
+        </div>
+        <div class="portal-field">
+          <label for="category">Category</label>
+          <input id="category" name="category" type="text" required value={String(rate.category)} />
+        </div>
+        <div class="portal-field">
+          <label for="billing_unit">Billing unit</label>
+          <input id="billing_unit" name="billing_unit" type="text" value={String(rate.billing_unit)} />
+        </div>
+        <div class="portal-field">
+          <label for="peak_or_off_peak">Peak / off-peak</label>
+          <select id="peak_or_off_peak" name="peak_or_off_peak">
+            {['n/a', 'peak', 'off-peak', 'both'].map((opt) => (
+              <option value={opt} selected={String(rate.peak_or_off_peak) === opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+        <div class="portal-field is-wide">
+          <label for="description">Description</label>
+          <input id="description" name="description" type="text" value={String(rate.description)} />
+        </div>
+        <div class="portal-field">
+          <label>&nbsp;</label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="is_placeholder_price" checked={!!rate.is_placeholder_price} />
+            Price is a placeholder (not final)
+          </label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="featured" checked={!!rate.featured} />
+            Featured
+          </label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="published" checked={!!rate.published} />
+            Visible on site
+          </label>
+        </div>
+      </div>
+      <div class="portal-actions">
+        <button type="submit" class="portal-btn">Save Plan</button>
+      </div>
+    </form>
+
+    <form method="POST" style="margin-top: 14px;" onsubmit="return confirm('Delete this rate plan and its features?')">
+      <input type="hidden" name="action" value="delete-rate" />
+      <button type="submit" class="portal-btn-ghost portal-btn-sm portal-btn-danger">Delete Plan</button>
+    </form>
+  </div>
+
+  <div class="portal-card">
+    <h2>Features ({features.length})</h2>
+    <div class="portal-list">
+      {features.map((f, i) => (
+        <div class="portal-list-row">
+          <div class="portal-order-btns">
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-feature" />
+              <input type="hidden" name="id" value={String(f.id)} />
+              <input type="hidden" name="direction" value="up" />
+              <button type="submit" disabled={i === 0} aria-label="Move up">▲</button>
+            </form>
+            <form method="POST" class="portal-inline-form">
+              <input type="hidden" name="action" value="move-feature" />
+              <input type="hidden" name="id" value={String(f.id)} />
+              <input type="hidden" name="direction" value="down" />
+              <button type="submit" disabled={i === features.length - 1} aria-label="Move down">▼</button>
+            </form>
+          </div>
+          <form method="POST" class="portal-list-body" style="display:flex; gap:10px; align-items:center;">
+            <input type="hidden" name="action" value="edit-feature" />
+            <input type="hidden" name="id" value={String(f.id)} />
+            <input name="feature" type="text" required value={String(f.feature)} style="flex:1;" />
+            <button type="submit" class="portal-btn portal-btn-sm">Save</button>
+          </form>
+          <form method="POST" class="portal-inline-form" onsubmit="return confirm('Delete this feature?')">
+            <input type="hidden" name="action" value="delete-feature" />
+            <input type="hidden" name="id" value={String(f.id)} />
+            <button type="submit" class="portal-btn-ghost portal-btn-sm portal-btn-danger">Delete</button>
+          </form>
+        </div>
+      ))}
+      {features.length === 0 && <p class="portal-card-hint">No features listed yet.</p>}
+    </div>
+
+    <form method="POST" style="margin-top: 16px; display:flex; gap:10px; align-items:flex-end;">
+      <input type="hidden" name="action" value="add-feature" />
+      <div class="portal-field" style="flex:1;">
+        <label for="new_feature">New feature</label>
+        <input id="new_feature" name="feature" type="text" required />
+      </div>
+      <button type="submit" class="portal-btn">Add Feature</button>
+    </form>
+  </div>
+</PortalLayout>

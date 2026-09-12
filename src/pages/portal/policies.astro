@@ -1,0 +1,45 @@
+---
+export const prerender = false;
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import SimpleCrudScreen from '../../components/portal/SimpleCrudScreen.astro';
+import { getDb } from '../../lib/db';
+import { listRows, handleSimpleCrudAction, type SimpleCrudConfig } from '../../lib/portal/simple-crud';
+
+const db = getDb();
+const BASE_PATH = '/portal/policies';
+
+const config: SimpleCrudConfig = {
+  table: 'policies',
+  // No natural order (each policy is referenced by a fixed slug from a
+  // specific public page, e.g. terms.astro / privacy.astro / cancellation-
+  // policy.astro — not listed generically), and the set of policies is
+  // fixed by what those pages look up, so adding/deleting here would just
+  // create orphaned or unreachable rows.
+  visibilityColumn: 'published',
+  hasSlug: true,
+  cacheKey: '__ALL__',
+  pageTitle: 'Policies',
+  addLabel: 'Add a Policy',
+  allowAdd: false,
+  allowDelete: false,
+  fields: [
+    { key: 'title', label: 'Title', type: 'text', required: true },
+    { key: 'last_updated', label: 'Last updated', type: 'text', placeholder: 'YYYY-MM-DD' },
+    { key: 'body', label: 'Body (Markdown)', type: 'textarea', wide: true },
+    { key: 'published', label: 'Visible on site', type: 'checkbox', defaultValue: true },
+  ],
+};
+
+let redirectTarget: string | null = null;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = await handleSimpleCrudAction(db, config, form, BASE_PATH);
+  redirectTarget = result.redirect;
+}
+if (redirectTarget) return Astro.redirect(redirectTarget);
+
+const rows = await listRows(db, config);
+---
+<PortalLayout title="Policies" active="policies">
+  <SimpleCrudScreen config={config} rows={rows} />
+</PortalLayout>

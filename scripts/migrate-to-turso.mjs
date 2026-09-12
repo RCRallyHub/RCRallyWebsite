@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 /**
+ * HISTORICAL / NON-FUNCTIONAL as of the Sveltia-removal cleanup: its source
+ * directory, src/content/*, has been deleted (nothing in the runtime code
+ * reads astro:content/getCollection anymore — every page now reads from
+ * Turso via src/lib/content/*.ts). This file is kept only as a record of
+ * the one-time migration and the src/content -> Turso field mapping it
+ * performed; running it today will simply find no source files and do
+ * nothing. If the schema ever needs to be re-derived from that original
+ * shape, this is the reference.
+ *
+ * Original header, preserved for context:
+ *
  * One-time (idempotent) migration: src/content/* (YAML/Markdown, edited via
  * Sveltia CMS) -> Turso/libSQL (db/schema.sql).
  *

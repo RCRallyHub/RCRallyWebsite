@@ -1,0 +1,44 @@
+---
+export const prerender = false;
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import SimpleCrudScreen from '../../components/portal/SimpleCrudScreen.astro';
+import { getDb } from '../../lib/db';
+import { listRows, handleSimpleCrudAction, type SimpleCrudConfig } from '../../lib/portal/simple-crud';
+
+const db = getDb();
+const BASE_PATH = '/portal/testimonials';
+
+const config: SimpleCrudConfig = {
+  table: 'testimonials',
+  orderColumn: 'display_order',
+  visibilityColumn: 'published',
+  previewField: 'avatar_url',
+  hasSlug: true,
+  slugSourceField: 'customer_name',
+  cacheKey: 'testimonials',
+  pageTitle: 'Testimonials',
+  addLabel: 'Add a Testimonial',
+  fields: [
+    { key: 'customer_name', label: 'Customer name', type: 'text', required: true },
+    { key: 'customer_type', label: 'Customer type', type: 'text', required: true, placeholder: 'e.g. Regular Player' },
+    { key: 'avatar_url', label: 'Avatar', type: 'image' },
+    { key: 'rating', label: 'Rating (1-5)', type: 'number', required: true, min: 1, max: 5, defaultValue: 5 },
+    { key: 'testimonial', label: 'Testimonial', type: 'textarea', required: true, wide: true },
+    { key: 'featured', label: 'Featured', type: 'checkbox' },
+    { key: 'published', label: 'Visible on site', type: 'checkbox', defaultValue: true },
+  ],
+};
+
+let redirectTarget: string | null = null;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = await handleSimpleCrudAction(db, config, form, BASE_PATH);
+  redirectTarget = result.redirect;
+}
+if (redirectTarget) return Astro.redirect(redirectTarget);
+
+const rows = await listRows(db, config);
+---
+<PortalLayout title="Testimonials" active="testimonials">
+  <SimpleCrudScreen config={config} rows={rows} />
+</PortalLayout>

@@ -1,0 +1,342 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { getDb } from '../../lib/db';
+import { invalidateCache } from '../../lib/content/cache';
+import { resolveImageField } from '../../lib/storage';
+
+const db = getDb();
+const SOCIAL_PLATFORMS = ['facebook', 'instagram', 'tiktok', 'youtube'] as const;
+
+function str(form: FormData, key: string): string | null {
+  const v = form.get(key);
+  const s = typeof v === 'string' ? v.trim() : '';
+  return s ? s : null;
+}
+
+let redirectTarget: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  try {
+    const form = await Astro.request.formData();
+    const businessName = str(form, 'business_name') ?? '';
+    const logoUrl = await resolveImageField(form, 'logo_url', { title: `${businessName} logo` });
+    const faviconUrl = await resolveImageField(form, 'favicon_url', { title: `${businessName} favicon` });
+    const ogImageUrl = await resolveImageField(form, 'default_seo_og_image', { title: `${businessName} default OG image` });
+
+    await db.execute({
+      sql: `UPDATE business_settings SET
+              business_name = ?,
+              tagline = ?,
+              logo_url = ?,
+              favicon_url = ?,
+              address = ?,
+              location_description = ?,
+              operating_hours = ?,
+              operating_hours_start = ?,
+              operating_hours_end = ?,
+              contact_mobile = ?,
+              contact_mobile_is_dummy = ?,
+              contact_email = ?,
+              contact_email_is_dummy = ?,
+              contact_facebook = ?,
+              contact_facebook_is_dummy = ?,
+              contact_messenger = ?,
+              map_embed_url = ?,
+              map_url = ?,
+              announcement_enabled = ?,
+              announcement_message = ?,
+              announcement_link = ?,
+              booking_button_text = ?,
+              booking_url = ?,
+              footer_description = ?,
+              footer_copyright_name = ?,
+              default_seo_title = ?,
+              default_seo_meta_description = ?,
+              default_seo_og_image = ?,
+              updated_at = unixepoch()
+            WHERE id = 1`,
+      args: [
+        businessName,
+        str(form, 'tagline'),
+        logoUrl ?? '',
+        faviconUrl,
+        str(form, 'address') ?? '',
+        str(form, 'location_description') ?? '',
+        str(form, 'operating_hours') ?? '',
+        str(form, 'operating_hours_start') ?? '',
+        str(form, 'operating_hours_end') ?? '',
+        str(form, 'contact_mobile') ?? '',
+        form.has('contact_mobile_is_dummy') ? 1 : 0,
+        str(form, 'contact_email') ?? '',
+        form.has('contact_email_is_dummy') ? 1 : 0,
+        str(form, 'contact_facebook') ?? '',
+        form.has('contact_facebook_is_dummy') ? 1 : 0,
+        str(form, 'contact_messenger'),
+        str(form, 'map_embed_url'),
+        str(form, 'map_url'),
+        form.has('announcement_enabled') ? 1 : 0,
+        str(form, 'announcement_message'),
+        str(form, 'announcement_link'),
+        str(form, 'booking_button_text') ?? 'Book a Court',
+        str(form, 'booking_url') ?? '',
+        str(form, 'footer_description'),
+        str(form, 'footer_copyright_name'),
+        str(form, 'default_seo_title'),
+        str(form, 'default_seo_meta_description'),
+        ogImageUrl,
+      ],
+    });
+
+    for (const platform of SOCIAL_PLATFORMS) {
+      const url = str(form, `social_${platform}_url`);
+      const enabled = form.has(`social_${platform}_enabled`) ? 1 : 0;
+
+      const existing = await db.execute({
+        sql: 'SELECT id FROM social_links WHERE platform = ? LIMIT 1',
+        args: [platform],
+      });
+
+      if (existing.rows.length > 0) {
+        await db.execute({
+          sql: 'UPDATE social_links SET url = ?, enabled = ?, updated_at = unixepoch() WHERE platform = ?',
+          args: [url, enabled, platform],
+        });
+      } else {
+        await db.execute({
+          sql: 'INSERT INTO social_links (platform, url, enabled, sort_order) VALUES (?, ?, ?, ?)',
+          args: [platform, url, enabled, SOCIAL_PLATFORMS.indexOf(platform)],
+        });
+      }
+    }
+
+    invalidateCache('settings');
+    redirectTarget = '/portal/business-info?saved=1';
+  } catch (err) {
+    console.error('Failed to save business info:', err);
+    redirectTarget = '/portal/business-info?error=1';
+  }
+}
+
+if (redirectTarget) {
+  return Astro.redirect(redirectTarget);
+}
+
+const settingsRow = (await db.execute('SELECT * FROM business_settings WHERE id = 1')).rows[0];
+if (!settingsRow) {
+  throw new Error('business_settings row missing — run scripts/migrate-to-turso.mjs');
+}
+
+const socialRows = (await db.execute('SELECT platform, url, enabled FROM social_links')).rows;
+const socialByPlatform = new Map(socialRows.map((r) => [String(r.platform), r]));
+---
+<PortalLayout title="Business Info" active="business-info">
+  <form method="POST" class="portal-card" enctype="multipart/form-data">
+    <h2>Business Details</h2>
+    <p class="portal-card-hint">Core identity shown across the site header, footer, and SEO tags.</p>
+
+    <fieldset class="portal-fieldset">
+      <legend>Identity</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label for="business_name">Business name</label>
+          <input id="business_name" name="business_name" type="text" required value={String(settingsRow.business_name)} />
+        </div>
+        <div class="portal-field">
+          <label for="tagline">Tagline</label>
+          <input id="tagline" name="tagline" type="text" value={settingsRow.tagline ? String(settingsRow.tagline) : ''} />
+        </div>
+        <div class="portal-field">
+          <label for="logo_url">Logo (path/URL, or upload)</label>
+          <input id="logo_url" name="logo_url" type="text" value={String(settingsRow.logo_url)} />
+          <input name="logo_url_upload" type="file" accept="image/*" style="font-size:0.76rem; margin-top:4px;" />
+        </div>
+        <div class="portal-field">
+          <label for="favicon_url">Favicon (path/URL, or upload)</label>
+          <input id="favicon_url" name="favicon_url" type="text" value={settingsRow.favicon_url ? String(settingsRow.favicon_url) : ''} />
+          <input name="favicon_url_upload" type="file" accept="image/*" style="font-size:0.76rem; margin-top:4px;" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Location &amp; Hours</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field is-wide">
+          <label for="address">Address</label>
+          <input id="address" name="address" type="text" required value={String(settingsRow.address)} />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="location_description">Location description</label>
+          <input id="location_description" name="location_description" type="text" required value={String(settingsRow.location_description)} />
+        </div>
+        <div class="portal-field">
+          <label for="operating_hours">Operating hours (display text)</label>
+          <input id="operating_hours" name="operating_hours" type="text" required value={String(settingsRow.operating_hours)} />
+        </div>
+        <div class="portal-field">
+          <label for="operating_hours_start">Opens at</label>
+          <input id="operating_hours_start" name="operating_hours_start" type="text" required value={String(settingsRow.operating_hours_start)} />
+        </div>
+        <div class="portal-field">
+          <label for="operating_hours_end">Closes at</label>
+          <input id="operating_hours_end" name="operating_hours_end" type="text" required value={String(settingsRow.operating_hours_end)} />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Contact</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label for="contact_mobile">Mobile number</label>
+          <input id="contact_mobile" name="contact_mobile" type="tel" required value={String(settingsRow.contact_mobile)} />
+        </div>
+        <div class="portal-field">
+          <label>&nbsp;</label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="contact_mobile_is_dummy" checked={!!settingsRow.contact_mobile_is_dummy} />
+            This is placeholder data (not final)
+          </label>
+        </div>
+        <div class="portal-field">
+          <label for="contact_email">Email</label>
+          <input id="contact_email" name="contact_email" type="email" required value={String(settingsRow.contact_email)} />
+        </div>
+        <div class="portal-field">
+          <label>&nbsp;</label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="contact_email_is_dummy" checked={!!settingsRow.contact_email_is_dummy} />
+            This is placeholder data (not final)
+          </label>
+        </div>
+        <div class="portal-field">
+          <label for="contact_facebook">Facebook (contact card)</label>
+          <input id="contact_facebook" name="contact_facebook" type="text" required value={String(settingsRow.contact_facebook)} />
+        </div>
+        <div class="portal-field">
+          <label>&nbsp;</label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="contact_facebook_is_dummy" checked={!!settingsRow.contact_facebook_is_dummy} />
+            This is placeholder data (not final)
+          </label>
+        </div>
+        <div class="portal-field">
+          <label for="contact_messenger">Messenger link</label>
+          <input id="contact_messenger" name="contact_messenger" type="url" value={settingsRow.contact_messenger ? String(settingsRow.contact_messenger) : ''} />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Map</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field is-wide">
+          <label for="map_embed_url">Map embed URL</label>
+          <input id="map_embed_url" name="map_embed_url" type="url" value={settingsRow.map_embed_url ? String(settingsRow.map_embed_url) : ''} />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="map_url">Map link URL</label>
+          <input id="map_url" name="map_url" type="url" value={settingsRow.map_url ? String(settingsRow.map_url) : ''} />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Announcement Bar</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label>&nbsp;</label>
+          <label class="portal-checkbox">
+            <input type="checkbox" name="announcement_enabled" checked={!!settingsRow.announcement_enabled} />
+            Show announcement bar
+          </label>
+        </div>
+        <div class="portal-field is-wide">
+          <label for="announcement_message">Message</label>
+          <input id="announcement_message" name="announcement_message" type="text" value={settingsRow.announcement_message ? String(settingsRow.announcement_message) : ''} />
+        </div>
+        <div class="portal-field">
+          <label for="announcement_link">Link</label>
+          <input id="announcement_link" name="announcement_link" type="text" value={settingsRow.announcement_link ? String(settingsRow.announcement_link) : ''} />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Booking</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field">
+          <label for="booking_button_text">Booking button text</label>
+          <input id="booking_button_text" name="booking_button_text" type="text" required value={String(settingsRow.booking_button_text)} />
+        </div>
+        <div class="portal-field">
+          <label for="booking_url">Booking URL</label>
+          <input id="booking_url" name="booking_url" type="url" required value={String(settingsRow.booking_url)} />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Footer</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field is-wide">
+          <label for="footer_description">Footer description</label>
+          <textarea id="footer_description" name="footer_description">{settingsRow.footer_description ? String(settingsRow.footer_description) : ''}</textarea>
+        </div>
+        <div class="portal-field">
+          <label for="footer_copyright_name">Copyright name</label>
+          <input id="footer_copyright_name" name="footer_copyright_name" type="text" value={settingsRow.footer_copyright_name ? String(settingsRow.footer_copyright_name) : ''} />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Social Links</legend>
+      <div class="portal-form-grid">
+        {SOCIAL_PLATFORMS.map((platform) => {
+          const row = socialByPlatform.get(platform);
+          return (
+            <div class="portal-field">
+              <label for={`social_${platform}_url`}>{platform[0].toUpperCase() + platform.slice(1)} URL</label>
+              <input
+                id={`social_${platform}_url`}
+                name={`social_${platform}_url`}
+                type="url"
+                value={row?.url ? String(row.url) : ''}
+              />
+              <label class="portal-checkbox">
+                <input type="checkbox" name={`social_${platform}_enabled`} checked={row ? !!row.enabled : true} />
+                Enabled
+              </label>
+            </div>
+          );
+        })}
+      </div>
+    </fieldset>
+
+    <fieldset class="portal-fieldset">
+      <legend>Default SEO</legend>
+      <div class="portal-form-grid">
+        <div class="portal-field is-wide">
+          <label for="default_seo_title">Default SEO title</label>
+          <input id="default_seo_title" name="default_seo_title" type="text" value={settingsRow.default_seo_title ? String(settingsRow.default_seo_title) : ''} />
+        </div>
+        <div class="portal-field is-wide">
+          <label for="default_seo_meta_description">Default meta description</label>
+          <textarea id="default_seo_meta_description" name="default_seo_meta_description">{settingsRow.default_seo_meta_description ? String(settingsRow.default_seo_meta_description) : ''}</textarea>
+        </div>
+        <div class="portal-field is-wide">
+          <label for="default_seo_og_image">Default OG image (path/URL, or upload)</label>
+          <input id="default_seo_og_image" name="default_seo_og_image" type="text" value={settingsRow.default_seo_og_image ? String(settingsRow.default_seo_og_image) : ''} />
+          <input name="default_seo_og_image_upload" type="file" accept="image/*" style="font-size:0.76rem; margin-top:4px;" />
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="portal-actions">
+      <button type="submit" class="portal-btn">Save Changes</button>
+    </div>
+  </form>
+</PortalLayout>

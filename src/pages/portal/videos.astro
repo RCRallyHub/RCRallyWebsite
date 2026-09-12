@@ -1,0 +1,54 @@
+---
+export const prerender = false;
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import SimpleCrudScreen from '../../components/portal/SimpleCrudScreen.astro';
+import { getDb } from '../../lib/db';
+import { listRows, handleSimpleCrudAction, type SimpleCrudConfig } from '../../lib/portal/simple-crud';
+
+const db = getDb();
+const BASE_PATH = '/portal/videos';
+
+const config: SimpleCrudConfig = {
+  table: 'videos',
+  orderColumn: 'display_order',
+  visibilityColumn: 'published',
+  previewField: 'poster_image_url',
+  hasSlug: true,
+  slugSourceField: 'title',
+  cacheKey: 'videos',
+  pageTitle: 'Videos',
+  addLabel: 'Add a Video',
+  fields: [
+    { key: 'title', label: 'Title', type: 'text', required: true },
+    { key: 'description', label: 'Description', type: 'textarea', wide: true },
+    { key: 'facebook_reel_url', label: 'Facebook Reel URL', type: 'url', required: true, wide: true },
+    {
+      key: 'approved_embed_url',
+      label: 'Approved embed URL',
+      type: 'url',
+      required: true,
+      wide: true,
+      placeholder: 'The CSP-safe embeddable URL used on the public site',
+    },
+    { key: 'poster_image_url', label: 'Poster image', type: 'image', required: true },
+    { key: 'poster_image_alt', label: 'Poster alt text', type: 'text' },
+    { key: 'category', label: 'Category', type: 'text', required: true, defaultValue: 'Highlights' },
+    { key: 'video_date', label: 'Date (optional)', type: 'text', placeholder: 'YYYY-MM-DD' },
+    { key: 'featured', label: 'Featured', type: 'checkbox' },
+    { key: 'published', label: 'Visible on site', type: 'checkbox', defaultValue: true },
+  ],
+};
+
+let redirectTarget: string | null = null;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const result = await handleSimpleCrudAction(db, config, form, BASE_PATH);
+  redirectTarget = result.redirect;
+}
+if (redirectTarget) return Astro.redirect(redirectTarget);
+
+const rows = await listRows(db, config);
+---
+<PortalLayout title="Videos" active="videos">
+  <SimpleCrudScreen config={config} rows={rows} />
+</PortalLayout>

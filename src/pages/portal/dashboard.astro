@@ -1,11 +1,8 @@
 ---
 export const prerender = false;
 
+import PortalLayout from '../../layouts/PortalLayout.astro';
 import { getDb } from '../../lib/db';
-
-// context.locals.adminUser is guaranteed set here — src/middleware.ts redirects
-// anonymous requests to /portal/login before this page ever renders.
-const adminUser = Astro.locals.adminUser!;
 
 const db = getDb();
 
@@ -29,70 +26,45 @@ const counts = await Promise.all(
   })
 );
 
-const comingSoon = [
-  'Pages',
-  'Navigation',
-  'Business Info',
-  'Rates & Packages',
-  'Events',
-  'Gallery',
-  'Videos',
-  'Testimonials',
-  'FAQs',
-  'Add-ons',
-  'Policies',
+const manageLinks: { label: string; href?: string }[] = [
+  { label: 'Business Info', href: '/portal/business-info' },
+  { label: 'Gallery', href: '/portal/gallery' },
+  { label: 'Pages', href: '/portal/pages' },
+  { label: 'Navigation', href: '/portal/navigation' },
+  { label: 'Rates & Packages', href: '/portal/rates' },
+  { label: 'Events', href: '/portal/events' },
+  { label: 'Videos', href: '/portal/videos' },
+  { label: 'Testimonials', href: '/portal/testimonials' },
+  { label: 'FAQs', href: '/portal/faqs' },
+  { label: 'Add-ons', href: '/portal/addons' },
+  { label: 'Policies', href: '/portal/policies' },
 ];
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex, nofollow" />
-    <title>Dashboard — RC Rally Hub Portal</title>
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/portal-assets/portal.css" />
-  </head>
-  <body>
-    <div class="portal-shell">
-      <div class="portal-topbar">
-        <div>
-          <div class="portal-eyebrow">RC Rally Hub</div>
-          <h1>Admin Portal</h1>
-        </div>
-        <div class="portal-user">
-          <span>Signed in as <strong>{adminUser.username}</strong></span>
-          <form method="POST" action="/api/admin/logout">
-            <button type="submit">Log Out</button>
-          </form>
-        </div>
+<PortalLayout title="Dashboard" active="dashboard">
+  <p class="portal-section-title">Content overview</p>
+  <div class="portal-grid">
+    {counts.map((c) => (
+      <div class="portal-stat-card">
+        <div class="portal-stat-value">{c.count}</div>
+        <div class="portal-stat-label">{c.label}</div>
       </div>
+    ))}
+  </div>
 
-      <p class="portal-section-title">Content overview</p>
-      <div class="portal-grid">
-        {counts.map((c) => (
-          <div class="portal-stat-card">
-            <div class="portal-stat-value">{c.count}</div>
-            <div class="portal-stat-label">{c.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <p class="portal-section-title">Manage content</p>
-      <div class="portal-nav-grid">
-        {comingSoon.map((label) => (
-          <div class="portal-nav-card">
-            <span class="portal-nav-card-title">{label}</span>
-            <span class="portal-badge">Coming soon</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  </body>
-</html>
+  <p class="portal-section-title">Manage content</p>
+  <div class="portal-nav-grid">
+    {manageLinks.map((item) =>
+      item.href ? (
+        <a class="portal-nav-card" href={item.href}>
+          <span class="portal-nav-card-title">{item.label}</span>
+          <span class="portal-badge is-live">Open</span>
+        </a>
+      ) : (
+        <div class="portal-nav-card">
+          <span class="portal-nav-card-title">{item.label}</span>
+          <span class="portal-badge">Coming soon</span>
+        </div>
+      )
+    )}
+  </div>
+</PortalLayout>

@@ -22,7 +22,7 @@ const videos = (await getVideos()).filter((v) => v.data.published).sort((a, b) =
       {videos.length > 0 ? (
         <VideoCarousel videos={videos.map((v) => v.data)} id="videos-page-carousel" />
       ) : (
-        <p class="text-center text-rc-silver-dark py-16">No videos published yet — add some in Sveltia CMS under "Videos."</p>
+        <p class="text-center text-rc-silver-dark py-16">No videos published yet — add some in the admin portal under Videos.</p>
       )}
     </div>
   </section>

@@ -1,0 +1,95 @@
+---
+// Shared shell for every /portal page: html head, sidebar nav, topbar with
+// the signed-in user + logout, and a flash-message banner driven by
+// ?saved=1 / ?error=<message> query params (the plain post/redirect/get
+// pattern every portal form below uses — no client JS required to see
+// success/error feedback).
+//
+// Astro.locals.adminUser is guaranteed set here: src/middleware.ts redirects
+// anonymous requests to /portal/login before any page using this layout
+// ever renders.
+import FlashBanner from '../components/portal/FlashBanner.astro';
+
+interface Props {
+  title: string;
+  active: string;
+}
+
+const { title, active } = Astro.props;
+const adminUser = Astro.locals.adminUser!;
+
+const NAV_ITEMS: { key: string; label: string; href: string; live: boolean }[] = [
+  { key: 'dashboard', label: 'Dashboard', href: '/portal/dashboard', live: true },
+  { key: 'business-info', label: 'Business Info', href: '/portal/business-info', live: true },
+  { key: 'gallery', label: 'Gallery', href: '/portal/gallery', live: true },
+  { key: 'pages', label: 'Pages', href: '/portal/pages', live: true },
+  { key: 'navigation', label: 'Navigation', href: '/portal/navigation', live: true },
+  { key: 'rates', label: 'Rates & Packages', href: '/portal/rates', live: true },
+  { key: 'events', label: 'Events', href: '/portal/events', live: true },
+  { key: 'videos', label: 'Videos', href: '/portal/videos', live: true },
+  { key: 'testimonials', label: 'Testimonials', href: '/portal/testimonials', live: true },
+  { key: 'faqs', label: 'FAQs', href: '/portal/faqs', live: true },
+  { key: 'addons', label: 'Add-ons', href: '/portal/addons', live: true },
+  { key: 'policies', label: 'Policies', href: '/portal/policies', live: true },
+];
+
+const success = Astro.url.searchParams.get('saved');
+const error = Astro.url.searchParams.get('error');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} — RC Rally Hub Portal</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/portal-assets/portal.css" />
+  </head>
+  <body>
+    <div class="portal-app">
+      <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+          <div class="portal-eyebrow">RC Rally Hub</div>
+          <h1>Admin Portal</h1>
+        </div>
+        <nav class="portal-sidebar-nav">
+          {NAV_ITEMS.map((item) =>
+            item.live ? (
+              <a href={item.href} class:list={{ 'is-active': active === item.key }}>
+                {item.label}
+              </a>
+            ) : (
+              <span class="portal-sidebar-disabled">
+                {item.label}
+                <span class="portal-badge">Soon</span>
+              </span>
+            )
+          )}
+        </nav>
+      </aside>
+
+      <main class="portal-main">
+        <div class="portal-topbar">
+          <h1>{title}</h1>
+          <div class="portal-user">
+            <span>Signed in as <strong>{adminUser.username}</strong></span>
+            <form method="POST" action="/api/admin/logout">
+              <button type="submit">Log Out</button>
+            </form>
+          </div>
+        </div>
+
+        <FlashBanner success={success} error={error} />
+
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
