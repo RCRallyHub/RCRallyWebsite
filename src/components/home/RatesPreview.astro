@@ -1,8 +1,8 @@
 ---
-import { getCollection } from 'astro:content';
+import { getRates } from '../../lib/content/rates';
 import RateCard from '../RateCard.astro';
 
-const allRates = (await getCollection('rates')).filter((r) => r.data.published && r.data.featured).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const allRates = (await getRates()).filter((r) => r.data.published && r.data.featured).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
 ---
 <section class="py-24 sm:py-28 bg-rc-charcoal/40">
   <div class="container-rc">

@@ -1,21 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
+import { getSettings } from '../lib/content/settings';
+import { getNavigation } from '../lib/content/navigation';
 import Icon from './Icon.astro';
 
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
-
-const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Book a Court', href: '/book' },
-  { label: 'Rates', href: '/rates' },
-  { label: 'Events', href: '/events' },
-  { label: 'Gallery', href: '/gallery' },
-  { label: 'Videos', href: '/videos' },
-  { label: 'About', href: '/about' },
-  { label: 'FAQs', href: '/faqs' },
-  { label: 'Contact', href: '/contact' },
-];
+const settings = await getSettings();
+const { header: navLinks } = await getNavigation();
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---

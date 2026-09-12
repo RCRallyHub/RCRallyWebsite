@@ -1,14 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { getPolicyBySlug } from '../lib/content/policies';
+import { renderMarkdown } from '../lib/content/render-markdown';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'privacy')!;
+const page = (await getPageBySlug('privacy'))!;
 
-const policies = await getCollection('policies');
-const policy = policies.find((p) => p.slug === 'privacy')!;
-const { Content } = await policy.render();
+const policy = (await getPolicyBySlug('privacy'))!;
+const policyHtml = await renderMarkdown(policy.body);
 ---
 <Layout
   title={page.data.seoTitle || page.data.title}
@@ -20,9 +20,7 @@ const { Content } = await policy.render();
   <section class="py-16 sm:py-20">
     <div class="container-rc max-w-3xl mx-auto">
       <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-8">Last updated: {policy.data.lastUpdated}</p>
-      <div class="prose-rc reveal">
-        <Content />
-      </div>
+      <div class="prose-rc reveal" set:html={policyHtml} />
     </div>
   </section>
 </Layout>

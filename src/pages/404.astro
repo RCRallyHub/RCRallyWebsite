@@ -1,9 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === '404')!;
+const page = (await getPageBySlug('404'))!;
 ---
 <Layout title={page.data.seoTitle || page.data.title} description={page.data.metaDescription || ''} noindex>
   <section class="min-h-[75vh] flex items-center justify-center relative overflow-hidden">

@@ -3,19 +3,20 @@ import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Icon from '../components/Icon.astro';
 import TestimonialCarousel from '../components/TestimonialCarousel.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { renderMarkdown } from '../lib/content/render-markdown';
+import { getAboutContent } from '../lib/content/aboutContent';
+import { getTestimonials } from '../lib/content/testimonials';
+import { getSettings } from '../lib/content/settings';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'about')!;
-const { Content } = await page.render();
+const page = (await getPageBySlug('about'))!;
+const pageContentHtml = await renderMarkdown(page.body);
 
-const aboutEntries = await getCollection('aboutContent');
-const about = aboutEntries[0].data;
+const about = await getAboutContent();
 
-const testimonials = (await getCollection('testimonials')).filter((t) => t.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder).slice(0, 6);
+const testimonials = (await getTestimonials()).filter((t) => t.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder).slice(0, 6);
 
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+const settings = await getSettings();
 ---
 <Layout
   title={page.data.seoTitle || page.data.title}
@@ -27,9 +28,7 @@ const settings = settingsEntries[0].data;
 
   <section class="py-20 sm:py-24">
     <div class="container-rc grid lg:grid-cols-[1.3fr_0.7fr] gap-14">
-      <article class="prose-rc reveal">
-        <Content />
-      </article>
+      <article class="prose-rc reveal" set:html={pageContentHtml} />
       <aside class="reveal space-y-6" data-reveal-delay="100">
         <div class="card-surface p-6">
           <h3 class="font-heading font-bold text-rc-lime uppercase text-sm tracking-wide mb-4">Venue Snapshot</h3>

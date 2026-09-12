@@ -3,13 +3,11 @@ import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import ContactForm from '../components/ContactForm.astro';
 import Icon from '../components/Icon.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { getSettings } from '../lib/content/settings';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'contact')!;
-
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+const page = (await getPageBySlug('contact'))!;
+const settings = await getSettings();
 ---
 <Layout
   title={page.data.seoTitle || page.data.title}

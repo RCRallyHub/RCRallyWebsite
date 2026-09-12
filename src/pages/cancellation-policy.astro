@@ -1,18 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { getPolicyBySlug } from '../lib/content/policies';
+import { renderMarkdown } from '../lib/content/render-markdown';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'cancellation-policy')!;
+const page = (await getPageBySlug('cancellation-policy'))!;
 
-const policies = await getCollection('policies');
-const cancellation = policies.find((p) => p.slug === 'cancellation')!;
-const rescheduling = policies.find((p) => p.slug === 'rescheduling')!;
-const venueRules = policies.find((p) => p.slug === 'venue-rules')!;
-const { Content: CancellationContent } = await cancellation.render();
-const { Content: ReschedulingContent } = await rescheduling.render();
-const { Content: VenueRulesContent } = await venueRules.render();
+const cancellation = (await getPolicyBySlug('cancellation'))!;
+const rescheduling = (await getPolicyBySlug('rescheduling'))!;
+const venueRules = (await getPolicyBySlug('venue-rules'))!;
+const cancellationHtml = await renderMarkdown(cancellation.body);
+const reschedulingHtml = await renderMarkdown(rescheduling.body);
+const venueRulesHtml = await renderMarkdown(venueRules.body);
 ---
 <Layout
   title={page.data.seoTitle || page.data.title}
@@ -26,17 +26,17 @@ const { Content: VenueRulesContent } = await venueRules.render();
       <div class="reveal">
         <h2 class="font-display text-2xl uppercase text-rc-white mb-4">Cancellation Policy</h2>
         <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-6">Last updated: {cancellation.data.lastUpdated}</p>
-        <div class="prose-rc"><CancellationContent /></div>
+        <div class="prose-rc" set:html={cancellationHtml} />
       </div>
       <div class="reveal">
         <h2 class="font-display text-2xl uppercase text-rc-white mb-4">Rescheduling Policy</h2>
         <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-6">Last updated: {rescheduling.data.lastUpdated}</p>
-        <div class="prose-rc"><ReschedulingContent /></div>
+        <div class="prose-rc" set:html={reschedulingHtml} />
       </div>
       <div class="reveal">
         <h2 class="font-display text-2xl uppercase text-rc-white mb-4">Venue Rules</h2>
         <p class="text-xs text-rc-silver-dark uppercase tracking-wide mb-6">Last updated: {venueRules.data.lastUpdated}</p>
-        <div class="prose-rc"><VenueRulesContent /></div>
+        <div class="prose-rc" set:html={venueRulesHtml} />
       </div>
       <div class="card-surface p-7 text-center reveal">
         <p class="text-rc-silver mb-5">Need to cancel or reschedule an existing booking?</p>

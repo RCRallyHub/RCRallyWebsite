@@ -1,9 +1,8 @@
 ---
 import { SITE_URL } from '../../astro.config.mjs';
-import { getCollection } from 'astro:content';
+import { getSettings } from '../lib/content/settings';
 
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+const settings = await getSettings();
 
 interface Props {
   breadcrumbs?: { name: string; url: string }[];

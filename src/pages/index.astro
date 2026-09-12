@@ -12,20 +12,22 @@ import VideoCarousel from '../components/VideoCarousel.astro';
 import TestimonialCarousel from '../components/TestimonialCarousel.astro';
 import GalleryPreview from '../components/home/GalleryPreview.astro';
 import FinalCTA from '../components/home/FinalCTA.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { renderMarkdown } from '../lib/content/render-markdown';
+import { getHomeContent } from '../lib/content/homeContent';
+import { getSettings } from '../lib/content/settings';
+import { getVideos } from '../lib/content/videos';
+import { getTestimonials } from '../lib/content/testimonials';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'home')!;
-const { Content } = await page.render();
+const page = (await getPageBySlug('home'))!;
+const pageContentHtml = await renderMarkdown(page.body);
 
-const homeContentEntries = await getCollection('homeContent');
-const homeData = homeContentEntries[0].data;
+const homeData = await getHomeContent();
 
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+const settings = await getSettings();
 
-const videos = (await getCollection('videos')).filter((v) => v.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
-const testimonials = (await getCollection('testimonials')).filter((t) => t.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const videos = (await getVideos()).filter((v) => v.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const testimonials = (await getTestimonials()).filter((t) => t.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
 ---
 <Layout title={page.data.seoTitle || page.data.title} description={page.data.metaDescription || page.data.description || ''} ogImage={page.data.ogImage}>
   <Hero
@@ -40,9 +42,7 @@ const testimonials = (await getCollection('testimonials')).filter((t) => t.data.
 
   <QuickHighlights highlights={homeData.highlights} />
 
-  <div class="prose-rc sr-only">
-    <Content />
-  </div>
+  <div class="prose-rc sr-only" set:html={pageContentHtml} />
   <AboutPreview
     heading="More Than a Court — It's Where the Rally Begins"
     description="RC Rally Hub is a welcoming pickleball destination where players can compete, improve, meet new people, and enjoy memorable games with friends and family. Located inside Garahe by Chef Rods Restaurant in Pala-o, Iligan City, it is the perfect place to rally, play, and connect."

@@ -1,7 +1,7 @@
 ---
-import { getCollection } from 'astro:content';
+import { getGalleryImages } from '../../lib/content/gallery';
 
-const images = (await getCollection('gallery')).filter((g) => g.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder).slice(0, 8);
+const images = (await getGalleryImages()).filter((g) => g.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder).slice(0, 8);
 ---
 <section class="py-24 sm:py-28 bg-rc-charcoal/40">
   <div class="container-rc">

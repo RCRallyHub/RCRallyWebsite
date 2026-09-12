@@ -1,12 +1,16 @@
 ---
-import { getCollection } from 'astro:content';
+import { getChatbotSettings } from '../lib/content/chatbot';
+import { getFaqs } from '../lib/content/faqs';
+import { getSettings } from '../lib/content/settings';
 import Icon from './Icon.astro';
 
-const chatbotEntries = await getCollection('chatbot');
-const chatbot = chatbotEntries[0].data;
-const faqEntries = (await getCollection('faqs')).filter((f) => f.data.published && f.data.useAsChatbotAnswer);
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+const chatbot = await getChatbotSettings();
+// Explicitly ordered by displayOrder — same editorial order used on the
+// public FAQs page — rather than relying on incidental row order.
+const faqEntries = (await getFaqs())
+  .filter((f) => f.data.published && f.data.useAsChatbotAnswer)
+  .sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const settings = await getSettings();
 
 const faqData = faqEntries.map((f) => ({ question: f.data.question, answer: f.data.answer, category: f.data.category }));
 const businessData = {

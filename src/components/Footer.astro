@@ -1,33 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
+import { getSettings } from '../lib/content/settings';
+import { getNavigation } from '../lib/content/navigation';
 import Icon from './Icon.astro';
 
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+const settings = await getSettings();
 const year = new Date().getFullYear();
 
-const columns = [
-  {
-    title: 'Explore',
-    links: [
-      { label: 'Home', href: '/' },
-      { label: 'Rates & Packages', href: '/rates' },
-      { label: 'Tournaments & Events', href: '/events' },
-      { label: 'Gallery', href: '/gallery' },
-      { label: 'Videos', href: '/videos' },
-    ],
-  },
-  {
-    title: 'Support',
-    links: [
-      { label: 'FAQs', href: '/faqs' },
-      { label: 'Contact Us', href: '/contact' },
-      { label: 'Cancellation & Rescheduling', href: '/cancellation-policy' },
-      { label: 'Terms & Conditions', href: '/terms' },
-      { label: 'Privacy Policy', href: '/privacy' },
-    ],
-  },
-];
+const { footer: columns } = await getNavigation();
 ---
 
 <footer class="relative mt-24 border-t border-white/10 bg-rc-charcoal overflow-hidden">

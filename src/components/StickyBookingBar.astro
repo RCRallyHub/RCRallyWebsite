@@ -1,7 +1,6 @@
 ---
-import { getCollection } from 'astro:content';
-const settingsEntries = await getCollection('settings');
-const settings = settingsEntries[0].data;
+import { getSettings } from '../lib/content/settings';
+const settings = await getSettings();
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 const hideOn = ['/book', '/admin'];
 const shouldRender = !hideOn.some((p) => currentPath.startsWith(p));

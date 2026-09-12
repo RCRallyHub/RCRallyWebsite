@@ -2,12 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import VideoCarousel from '../components/VideoCarousel.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { getVideos } from '../lib/content/videos';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'videos')!;
+const page = (await getPageBySlug('videos'))!;
 
-const videos = (await getCollection('videos')).filter((v) => v.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const videos = (await getVideos()).filter((v) => v.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
 ---
 <Layout
   title={page.data.seoTitle || page.data.title}

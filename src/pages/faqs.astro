@@ -2,12 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import FaqAccordion from '../components/FaqAccordion.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { getFaqs } from '../lib/content/faqs';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'faqs')!;
+const page = (await getPageBySlug('faqs'))!;
 
-const faqs = (await getCollection('faqs')).filter((f) => f.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const faqs = (await getFaqs()).filter((f) => f.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
 
 const faqSchema = {
   '@context': 'https://schema.org',

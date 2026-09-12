@@ -4,18 +4,20 @@ import PageHero from '../components/PageHero.astro';
 import RateCard from '../components/RateCard.astro';
 import PricingCalculator from '../components/PricingCalculator.astro';
 import Icon from '../components/Icon.astro';
-import { getCollection } from 'astro:content';
+import { getPageBySlug } from '../lib/content/pages';
+import { getSettings } from '../lib/content/settings';
+import { getRates } from '../lib/content/rates';
+import { getPolicyBySlug } from '../lib/content/policies';
+import { renderMarkdown } from '../lib/content/render-markdown';
 
-const pageEntries = await getCollection('pages');
-const page = pageEntries.find((p) => p.slug === 'rates')!;
+const page = (await getPageBySlug('rates'))!;
 
-const settingsEntries = await getCollection('settings');
-const bookingUrl = settingsEntries[0].data.bookingUrl;
+const settings = await getSettings();
+const bookingUrl = settings.bookingUrl;
 
-const rates = (await getCollection('rates')).filter((r) => r.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
-const policies = await getCollection('policies');
-const bookingRules = policies.find((p) => p.slug === 'booking-rules')!;
-const { Content: BookingRulesContent } = await bookingRules.render();
+const rates = (await getRates()).filter((r) => r.data.published).sort((a, b) => a.data.displayOrder - b.data.displayOrder);
+const bookingRules = (await getPolicyBySlug('booking-rules'))!;
+const bookingRulesHtml = await renderMarkdown(bookingRules.body);
 
 function extractNumber(str: string, fallback: number) {
   const match = str.match(/[\d,]+/);
@@ -71,9 +73,7 @@ const peakRate = extractNumber(peak?.data.price || '', 350);
         <h2 class="font-heading text-2xl font-bold text-rc-white mb-5 flex items-center gap-2">
           <Icon name="info" class="w-5 h-5 text-rc-lime" /> Booking Rules & Policies
         </h2>
-        <div class="prose-rc card-surface p-7">
-          <BookingRulesContent />
-        </div>
+        <div class="prose-rc card-surface p-7" set:html={bookingRulesHtml} />
       </div>
       <div class="reveal space-y-5" data-reveal-delay="100">
         <div class="card-surface p-6" id="payment-methods-card">

@@ -13,6 +13,7 @@
     "verify:booking-time": "node --experimental-strip-types scripts/verify-booking-time.mjs"
   },
   "dependencies": {
+    "@astrojs/netlify": "^6.5.5",
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/tailwind": "^6.0.2",
     "@libsql/client": "^0.14.0",

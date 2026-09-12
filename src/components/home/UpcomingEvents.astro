@@ -1,8 +1,8 @@
 ---
-import { getCollection } from 'astro:content';
+import { getEvents } from '../../lib/content/events';
 import EventCard from '../EventCard.astro';
 
-const events = (await getCollection('events'))
+const events = (await getEvents())
   .filter((e) => e.data.published)
   .sort((a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime())
   .slice(0, 6);
