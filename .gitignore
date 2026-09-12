@@ -22,3 +22,7 @@ yarn-error.log*
 
 # netlify
 .netlify/
+
+# local libSQL database (dev only; production uses hosted Turso)
+db/*.db
+db/*.db-*
