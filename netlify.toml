@@ -27,12 +27,14 @@
   to = "/book"
   status = 301
 
-# Custom 404 (Astro already emits /404.html; this makes the SPA-less
-# static fallback explicit for any unmatched route).
-[[redirects]]
-  from = "/*"
-  to = "/404.html"
-  status = 404
+# NOTE: the static-era catch-all "/* -> /404.html status=404" redirect was
+# removed here. Under output:'server' (SSR, added for the Turso migration)
+# there is no physical /404.html for Netlify to fall back to for unmatched
+# routes, and a literal "/*" redirect rule would match — and shadow — every
+# server-rendered route, including /portal/*, /api/admin/*, and
+# /events/[slug]. Astro's own SSR routing now renders src/pages/404.astro
+# (with a real 404 status) for anything unmatched, so this redirect is both
+# redundant and actively harmful post-SSR-cutover.
 
 # ---------------------------------------------------------------------------
 # Security headers
@@ -59,6 +61,13 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
     Cache-Control = "no-cache"
+
+# Portal is an authenticated admin area — never index it, never cache it.
+[[headers]]
+  for = "/portal/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
 
 # ---------------------------------------------------------------------------
 # Caching — long cache for hashed build assets & images, short for HTML

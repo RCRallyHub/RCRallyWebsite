@@ -1,0 +1,51 @@
+---
+export const prerender = false;
+
+import { SESSION_COOKIE_NAME, validateSession } from '../../lib/auth';
+
+// Already logged in? Skip straight to the dashboard.
+const existingToken = Astro.cookies.get(SESSION_COOKIE_NAME)?.value;
+if (await validateSession(existingToken)) {
+  return Astro.redirect('/portal/dashboard');
+}
+
+const redirectParam = Astro.url.searchParams.get('redirect') ?? '';
+const hasError = Astro.url.searchParams.get('error') === '1';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Portal Login — RC Rally Hub</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/portal-assets/portal.css" />
+  </head>
+  <body class="portal-login-body">
+    <main class="portal-login-card">
+      <h1>RC Rally Hub</h1>
+      <p class="portal-login-subtitle">Admin Portal</p>
+
+      {hasError && <p class="portal-alert" role="alert">Incorrect username or password.</p>}
+
+      <form method="POST" action="/api/admin/login" class="portal-login-form">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+
+        <input type="hidden" name="redirect" value={redirectParam} />
+
+        <button type="submit">Log In</button>
+      </form>
+    </main>
+  </body>
+</html>
