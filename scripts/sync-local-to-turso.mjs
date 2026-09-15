@@ -19,6 +19,12 @@
  *                      safely re-run after fixing something on the source
  *                      side, instead of only ever running once against an
  *                      empty database.
+ *   SYNC_TABLES     -- comma-separated table names to limit the sync to
+ *                      just those tables (e.g. SYNC_TABLES=navigation_items).
+ *                      Useful for pushing one missing/updated table without
+ *                      touching every other table -- including ones that may
+ *                      have newer edits made directly in the live /portal
+ *                      since the last full sync. Default: every table.
  *
  * Safe by design:
  *   - Never opens db/local.db for writing -- it only ever SELECTs from the
@@ -63,11 +69,27 @@ if (destUrl.startsWith('file:')) {
 }
 
 const schemaSql = readFileSync(path.join(repoRoot, 'db', 'schema.sql'), 'utf-8');
-const tableNames = [...schemaSql.matchAll(/^CREATE TABLE IF NOT EXISTS (\w+)/gm)].map((m) => m[1]);
-if (tableNames.length === 0) {
+const allTableNames = [...schemaSql.matchAll(/^CREATE TABLE IF NOT EXISTS (\w+)/gm)].map((m) => m[1]);
+if (allTableNames.length === 0) {
   console.error('Could not find any CREATE TABLE statements in db/schema.sql -- aborting.');
   process.exit(1);
 }
+
+const onlyTables = process.env.SYNC_TABLES
+  ? process.env.SYNC_TABLES.split(',').map((t) => t.trim()).filter(Boolean)
+  : undefined;
+if (onlyTables) {
+  const unknown = onlyTables.filter((t) => !allTableNames.includes(t));
+  if (unknown.length > 0) {
+    console.error(`SYNC_TABLES names a table not found in db/schema.sql: ${unknown.join(', ')}`);
+    console.error(`Known tables: ${allTableNames.join(', ')}`);
+    process.exit(1);
+  }
+}
+// Still walk the full schema order (parent-before-child) so FK-dependent
+// tables copy in the right order when several are requested together --
+// just skip any table not requested.
+const tableNames = onlyTables ? allTableNames.filter((t) => onlyTables.includes(t)) : allTableNames;
 
 const source = createClient({ url: sourceUrl });
 const dest = createClient({ url: destUrl, authToken: destToken });
