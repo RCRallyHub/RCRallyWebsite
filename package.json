@@ -10,7 +10,8 @@
     "build": "astro check --skipConfigCheck || true && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "verify:booking-time": "node --experimental-strip-types scripts/verify-booking-time.mjs"
+    "verify:booking-time": "node --experimental-strip-types scripts/verify-booking-time.mjs",
+    "postinstall": "patch-package || exit 0"
   },
   "dependencies": {
     "@astrojs/netlify": "^6.5.5",
@@ -30,10 +31,20 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.7.5",
+    "patch-package": "^8.0.0",
     "playwright": "^1.56.0",
     "typescript": "^5.9.3"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.63.3"
+  },
   "engines": {
     "node": ">=18.17.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.25.12": true,
+    "sharp@0.34.5": true
   }
 }

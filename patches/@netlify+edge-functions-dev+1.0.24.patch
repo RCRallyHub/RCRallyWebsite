@@ -1,0 +1,13 @@
+diff --git a/node_modules/@netlify/edge-functions-dev/dist/node/main.js b/node_modules/@netlify/edge-functions-dev/dist/node/main.js
+index 4d66fb5..67af895 100644
+--- a/node_modules/@netlify/edge-functions-dev/dist/node/main.js
++++ b/node_modules/@netlify/edge-functions-dev/dist/node/main.js
+@@ -256,7 +256,7 @@ var EdgeFunctionsHandler = class {
+       denoPort,
+       requestTimeout: this.requestTimeout
+     };
+-    const denoFlags = ["--allow-scripts", "--quiet", "--no-lock"];
++    const denoFlags = ["--quiet", "--no-lock"];
+     const script = `import('${pathToFileURL(denoRunPath).toString()}');`;
+     try {
+       await denoBridge.runInBackground(["eval", ...denoFlags, script, JSON.stringify(runOptions)], processRef, {
