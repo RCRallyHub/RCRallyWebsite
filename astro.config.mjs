@@ -15,21 +15,29 @@ export default defineConfig({
   // which queries Turso (through a short in-memory cache) instead of the
   // old astro:content collections.
   output: 'server',
-  // `includeFiles` force-includes rollup's Linux native binary in the
-  // packaged Netlify Function. Without this, Netlify's function packager
-  // (node-file-trace, run by @astrojs/netlify at build time) can't detect
-  // rollup's dynamically-computed require() of its own platform binary
-  // (rollup/dist/native.js resolves the filename at runtime, which static
-  // tracing can't follow), so it silently drops the file from the deployed
-  // function -- even though it's correctly present in node_modules and
-  // package-lock.json. That's what caused the "Cannot find module
-  // @rollup/rollup-linux-x64-gnu" 500s in production: something in this
-  // app's own SSR bundle ends up importing `vite` at runtime (via the
-  // Layout chunk's use of @astrojs/markdown-remark), and vite's module
-  // load path pulls in rollup, so rollup becomes a real runtime dependency
-  // of the function even though it's normally build-only.
+  // `includeFiles` force-includes binaries that Netlify's function packager
+  // (node-file-trace, run by @astrojs/netlify at build time) fails to
+  // detect because they're loaded through a runtime-computed path rather
+  // than a static import/require -- so it silently drops them from the
+  // deployed function even though they're correctly on disk:
+  //  - rollup's Linux native binary: rollup/dist/native.js does
+  //    require('@rollup/rollup-' + platform) at runtime. Something in this
+  //    app's own SSR bundle (Layout.astro's chunk graph, via
+  //    @astrojs/markdown-remark) ends up importing `vite` at runtime, and
+  //    vite's module load path pulls in rollup, so rollup becomes a real
+  //    runtime dependency of the function even though it's normally
+  //    build-only. This was the "Cannot find module
+  //    @rollup/rollup-linux-x64-gnu" 500s.
+  //  - netlify-redirector's WASM binary: used internally by the Netlify
+  //    adapter's generated handler to apply this project's _redirects
+  //    rules (see netlify.toml) on every request, loaded via a
+  //    scriptDirectory-relative path at runtime. Missing this one crashes
+  //    every request with a generic "This function has crashed" page.
   adapter: netlify({
-    includeFiles: ['node_modules/@rollup/rollup-linux-x64-gnu/**'],
+    includeFiles: [
+      'node_modules/@rollup/rollup-linux-x64-gnu/**',
+      'node_modules/netlify-redirector/lib/*.wasm',
+    ],
   }),
   integrations: [
     tailwind({ applyBaseStyles: false }),
